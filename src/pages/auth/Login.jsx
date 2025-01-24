@@ -1,52 +1,66 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { helpers } from '../../utils/helpers';
+import AuthService from '../../services/AuthService';
+import { useAuth } from '../../contexts/AuthContext';
 
-const Login = ({ role }) => {
+const Login = () => {
   const navigate = useNavigate();
-  const [step, setStep] = useState('login'); // 'login' or '2fa'
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    rememberMe: false,
-    verificationCode: ''
-  });
-
+  const { login } = useAuth();
+  const [step, setStep] = useState('login');
+  const [formData, setFormData] = useState({ email: '', password: '', verificationCode: '' });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
-  const [timer, setTimer] = useState(30); // Countdown timer for resend code
+  const [timer, setTimer] = useState(0);
+  const [userId, setUserId] = useState(null);
 
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
-
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: null }));
+  // Timer for resend code
+  useEffect(() => {
+    const storedExpiry = localStorage.getItem('2faResendExpiry');
+    if (storedExpiry) {
+      const remaining = Math.round((storedExpiry - Date.now()) / 1000);
+      if (remaining > 0) setTimer(remaining);
     }
-  };
+  }, []);
 
-  const handleInitialSubmit = async (e) => {
+  useEffect(() => {
+    let interval;
+    if (timer > 0) {
+      interval = setInterval(() => {
+        setTimer((prev) => {
+          if (prev <= 1) {
+            localStorage.removeItem('2faResendExpiry');
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [timer]);
+
+  // Handle login (Step 1)
+  const handleLoginSubmit = async (e) => {
     e.preventDefault();
-    const validationErrors = validateForm();
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
+    setErrors({});
+
+    if (!formData.email || !formData.password) {
+      setErrors({ submit: 'Please fill in all fields' });
       return;
     }
 
     setLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await AuthService.login(formData.email, formData.password);
+      setUserId(response.userId);
       setStep('2fa');
     } catch (error) {
-      setErrors({ submit: 'Invalid email or password' });
+      setErrors({ submit: error.message || 'Login failed' });
     } finally {
       setLoading(false);
     }
   };
 
+  // Handle 2FA verification (Step 2)
   const handle2FASubmit = async (e) => {
     e.preventDefault();
     if (!formData.verificationCode) {
@@ -56,242 +70,110 @@ const Login = ({ role }) => {
 
     setLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      const dashboardRoute = `/${role}/dashboard`;
-      navigate(dashboardRoute);
+      const response = await AuthService.verify2FA(userId, formData.verificationCode);
+      login(response.user, response.token);
+      navigate(`/${response.user.role}/dashboard`);
     } catch (error) {
-      setErrors({ submit: 'Invalid verification code' });
+      setErrors({ submit: error.message || 'Verification failed' });
     } finally {
       setLoading(false);
     }
   };
 
+  // Handle resend 2FA code
   const handleResendCode = async () => {
-    setTimer(30);
-    // Mock API call to resend code
-    const countdown = setInterval(() => {
-      setTimer((prev) => {
-        if (prev <= 1) {
-          clearInterval(countdown);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
+    try {
+      await AuthService.resend2FACode(formData.email);
+      const expiry = Date.now() + 60000;
+      localStorage.setItem('2faResendExpiry', expiry);
+      setTimer(60);
+    } catch (error) {
+      setErrors({ submit: error.message || 'Failed to resend code' });
+    }
   };
 
-  const validateForm = () => {
-    const newErrors = {};
-    if (!formData.email) {
-      newErrors.email = 'Email is required';
-    } else if (!helpers.isValidEmail(formData.email)) {
-      newErrors.email = 'Please enter a valid email address';
-    }
-    if (!formData.password) {
-      newErrors.password = 'Password is required';
-    }
-    return newErrors;
-  };
-
-  if (step === '2fa') {
-    return (
-      <div className="w-full max-w-md">
+  return (
+    <div className="w-full max-w-md p-4">
+      {step === '2fa' ? (
         <div className="text-center">
-          <h2 className="mt-6 text-3xl font-bold text-gray-900">
-            Two-Factor Authentication
-          </h2>
-          <p className="mt-2 text-sm text-gray-600">
-            We've sent a verification code to your email
-          </p>
-          <p className="text-sm font-medium text-gray-800">
-            {formData.email}
-          </p>
-        </div>
-
-        <form className="mt-8 space-y-6" onSubmit={handle2FASubmit}>
-          {errors.submit && (
-            <div className="p-3 text-sm text-red-600 bg-red-50 rounded-lg">
-              {errors.submit}
-            </div>
-          )}
-
-          <div>
-            <label htmlFor="verificationCode" className="block text-sm font-medium text-gray-700">
-              Verification Code
-            </label>
-            <div className="mt-1">
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">Two-Factor Authentication</h2>
+          <form onSubmit={handle2FASubmit} className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Verification Code
+              </label>
               <input
-                id="verificationCode"
                 name="verificationCode"
-                type="text"
-                maxLength="6"
                 value={formData.verificationCode}
-                onChange={handleChange}
-                className={`appearance-none block w-full px-3 py-2 border text-center text-2xl tracking-widest ${
-                  errors.verificationCode ? 'border-red-300' : 'border-gray-300'
-                } rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500`}
+                onChange={(e) => setFormData({ ...formData, verificationCode: e.target.value })}
+                className="w-full px-3 py-2 border rounded-md text-center text-xl"
                 placeholder="000000"
+                maxLength="6"
               />
-              {errors.verificationCode && (
-                <p className="mt-1 text-sm text-red-600">{errors.verificationCode}</p>
-              )}
             </div>
-          </div>
-
-          <div>
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-red-600 text-white py-2 rounded-md hover:bg-red-700 disabled:opacity-50"
             >
-              {loading ? (
-                <>
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                  </svg>
-                  Verifying...
-                </>
-              ) : (
-                'Verify Code'
-              )}
+              {loading ? 'Verifying...' : 'Verify Code'}
             </button>
-          </div>
-
-          <div className="text-center">
-            <button
-              type="button"
-              disabled={timer > 0}
-              onClick={handleResendCode}
-              className="text-sm font-medium text-red-600 hover:text-red-500 disabled:text-gray-400 disabled:cursor-not-allowed"
-            >
-              {timer > 0 ? `Resend code in ${timer}s` : 'Resend code'}
-            </button>
-            <p className="mt-2">
+            <div className="text-sm">
               <button
                 type="button"
-                onClick={() => setStep('login')}
-                className="text-sm text-gray-500 hover:text-gray-700"
+                onClick={handleResendCode}
+                disabled={timer > 0}
+                className="text-red-600 hover:text-red-700 disabled:text-gray-400"
               >
-                ← Back to login
+                {timer > 0 ? `Resend in ${timer}s` : 'Resend Code'}
               </button>
-            </p>
-          </div>
-        </form>
-      </div>
-    );
-  }
-
-  return (
-    <div className="w-full max-w-md">
-      <div className="text-center">
-        <h2 className="mt-6 text-3xl font-bold text-gray-900">
-          Welcome back
-        </h2>
-        <p className="mt-2 text-sm text-gray-600">
-          Don't have an account?{' '}
-          <Link to="/register" className="font-medium text-red-600 hover:text-red-500">
-            Sign up
-          </Link>
-        </p>
-      </div>
-
-      <form className="mt-8 space-y-6" onSubmit={handleInitialSubmit}>
-        {errors.submit && (
-          <div className="p-3 text-sm text-red-600 bg-red-50 rounded-lg">
-            {errors.submit}
-          </div>
-        )}
-
-        <div className="space-y-4">
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-              Email address
-            </label>
-            <div className="mt-1">
+            </div>
+          </form>
+        </div>
+      ) : (
+        <div className="text-center">
+          <h2 className="text-3xl font-bold text-gray-900 mb-6">Welcome Back</h2>
+          <form onSubmit={handleLoginSubmit} className="space-y-6">
+            <div>
               <input
-                id="email"
                 name="email"
                 type="email"
-                autoComplete="email"
+                placeholder="Email"
                 value={formData.email}
-                onChange={handleChange}
-                className={`appearance-none block w-full px-3 py-2 border ${
-                  errors.email ? 'border-red-300' : 'border-gray-300'
-                } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-red-500 focus:border-red-500`}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                className="w-full px-3 py-2 border rounded-md"
               />
-              {errors.email && (
-                <p className="mt-1 text-sm text-red-600">{errors.email}</p>
-              )}
             </div>
-          </div>
-
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-              Password
-            </label>
-            <div className="mt-1">
+            <div>
               <input
-                id="password"
                 name="password"
                 type="password"
-                autoComplete="current-password"
+                placeholder="Password"
                 value={formData.password}
-                onChange={handleChange}
-                className={`appearance-none block w-full px-3 py-2 border ${
-                  errors.password ? 'border-red-300' : 'border-gray-300'
-                } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-red-500 focus:border-red-500`}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                className="w-full px-3 py-2 border rounded-md"
               />
-              {errors.password && (
-                <p className="mt-1 text-sm text-red-600">{errors.password}</p>
-              )}
             </div>
-          </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-red-600 text-white py-2 rounded-md hover:bg-red-700 disabled:opacity-50"
+            >
+              {loading ? 'Signing In...' : 'Sign In'}
+            </button>
+            <div className="text-sm">
+              <Link to="/forgot-password" className="text-red-600 hover:text-red-700">
+                Forgot Password?
+              </Link>
+            </div>
+          </form>
         </div>
-
-        <div className="flex items-center justify-between">
-          <div className="flex items-center">
-            <input
-              id="rememberMe"
-              name="rememberMe"
-              type="checkbox"
-              checked={formData.rememberMe}
-              onChange={handleChange}
-              className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
-            />
-            <label htmlFor="rememberMe" className="ml-2 block text-sm text-gray-900">
-              Remember me
-            </label>
-          </div>
-
-          <Link
-            to="/forgot-password"
-            className="text-sm font-medium text-red-600 hover:text-red-500"
-          >
-            Forgot your password?
-          </Link>
+      )}
+      {errors.submit && (
+        <div className="mt-4 p-3 text-red-700 bg-red-100 rounded-md">
+          {errors.submit}
         </div>
-
-        <div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? (
-              <>
-                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                </svg>
-                Signing in...
-              </>
-            ) : (
-              'Sign in'
-            )}
-          </button>
-        </div>
-      </form>
+      )}
     </div>
   );
 };

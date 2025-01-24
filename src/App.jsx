@@ -20,6 +20,9 @@ import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import ForgotPassword from './pages/auth/ForgotPassword';
 import TutorOnboarding from './pages/auth/TutorOnboarding';
+import VerifyEmail from './pages/auth/VerifyEmail';
+import ResetPassword from './pages/auth/ResetPassword';
+
 
 // Student Pages
 import StudentDashboard from './pages/student/Dashboard';
@@ -69,10 +72,13 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/tutoronboarding" element={<TutorOnboarding />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
+          <Route path="/reset-password/:resetToken" element={<ResetPassword />} />
+
         </Route>
 
         {/* Student Routes */}
-     <Route element={<DashboardLayout role={userRole}/>}>
+        <Route element={<DashboardLayout role={userRole} />}>
           <Route
             path="/student/dashboard"
             element={
@@ -116,7 +122,7 @@ function App() {
         </Route>
 
 
-        <Route element={<DashboardLayout role = {userRole} />}>
+        <Route element={<DashboardLayout role={userRole} />}>
           <Route
             path="/tutor/dashboard"
             element={
@@ -127,7 +133,7 @@ function App() {
 
             }
           />
-         <Route
+          <Route
             path="/tutor/essay-pool"
             element={
               isAuthenticated && userRole === 'tutor'
@@ -137,15 +143,15 @@ function App() {
 
             }
           />
-            <Route
-              path="/tutor/chat/:essayId"
-              element={
-                isAuthenticated && userRole === 'tutor'
-                  ? <TutorChat />
-                  : <Navigate to="/login" />
-              }
-            />
-           <Route
+          <Route
+            path="/tutor/chat/:essayId"
+            element={
+              isAuthenticated && userRole === 'tutor'
+                ? <TutorChat />
+                : <Navigate to="/login" />
+            }
+          />
+          <Route
             path="/tutor/essay-feedback"
             element={
               isAuthenticated && userRole === 'tutor'
@@ -179,7 +185,7 @@ function App() {
 
 
 
-        <Route element={<DashboardLayout  role = {userRole} />}>
+        <Route element={<DashboardLayout role={userRole} />}>
           <Route
             path="/admin/dashboard"
             element={
