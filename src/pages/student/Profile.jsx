@@ -1,158 +1,128 @@
-// Profile.js
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ProfileHeader from '../../components/profile/ProfileHeader';
-import SettingsForm from '../../components/profile/SettingsForm';
-import ActivityLog from '../../components/profile/ActivityLog';
-import { mockUsers } from '../../data/mockUsers';
-import { mockEssays} from '../../data/mockEssays';
-import { mockInterviews } from '../../data/mockInterviews';
-
+import ProfileEdit from './ProfileEdit';
+import StudentService from '../../services/studentService';
+import { toast } from 'react-toastify';
+import Loading from '../../components/common/LoadingSpinner';
+import 'react-toastify/dist/ReactToastify.css';
 
 const Profile = () => {
-  const [activeTab, setActiveTab] = useState('profile');
-  const [isEditing, setIsEditing] = useState(false);
+    const [activeTab, setActiveTab] = useState('profile');
+    const [isEditing, setIsEditing] = useState(false);
+    const [student, setStudent] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [stats, setStats] = useState([]);
 
-  // Get mock student data
-  const student = mockUsers.students[0];
+    useEffect(() => {
+        const fetchProfileAndStats = async () => {
+          setLoading(true);
+          try {
+            const profileData = await StudentService.getProfile();
+            const dashboardData = await StudentService.getStudentDashboard();
 
-  // Calculate activity stats
-  const stats = [
-    {
-      name: 'Essays Submitted',
-      value: student.stats.essaysSubmitted
-    },
-    {
-      name: 'Interviews Completed',
-      value: student.stats.interviewsCompleted
-    },
-    {
-      name: 'Average Score',
-      value: '8.5/10'
-    },
-    {
-      name: 'Days Active',
-      value: '45'
+            setStudent(profileData.student);
+            setStats([
+                {
+                  name: 'Essays Submitted',
+                  value: dashboardData.essaysSubmitted || 0
+                },
+                {
+                  name: 'Interviews Completed',
+                  value: dashboardData.interviewsCompleted || 0
+                },
+                {
+                    name: 'Average Score',
+                    value: dashboardData.averagePercentage || 'N/A'
+                }
+              ]);
+
+          } catch (error) {
+             toast.error(error.message || 'Failed to fetch profile.');
+          } finally {
+            setLoading(false);
+          }
+        };
+        fetchProfileAndStats();
+    }, []);
+
+    const handleEditProfile = () => {
+      setIsEditing(true);
+    };
+
+    const handleCancelEdit = () => {
+      setIsEditing(false);
+    };
+
+    const handleSaveProfile = (updatedStudent) => {
+      setStudent(updatedStudent);
+      setIsEditing(false);
+    };
+
+    if (loading) {
+        return  <Loading />;
     }
-  ];
 
-  // Get user activities (combine essays and interviews)
-  const activities = [
-    ...mockEssays
-      .filter(essay => essay.studentId === student.id)
-      .map(essay => ({
-        type: 'essay',
-        title: essay.title,
-        status: essay.status,
-        date: essay.submittedAt
-      })),
-    ...mockInterviews
-      .filter(interview => interview.studentId === student.id)
-      .map(interview => ({
-        type: 'interview',
-        title: `${interview.subject} Interview`,
-        status: interview.status,
-        date: interview.datetime
-      }))
-  ].sort((a, b) => new Date(b.date) - new Date(a.date));
+    if (!student) {
+      return <div className="text-center mt-8 text-red-500">Could not load user profile.</div>
+    }
 
-  const handleSaveProfile = (formData) => {
-    console.log('Saving profile:', formData);
-    setIsEditing(false);
-  };
-
-  return (
-    <div className="space-y-6">
-      {/* Profile Header with Stats */}
-      <ProfileHeader
-        user={student}
-        stats={stats}
-        showEdit={!isEditing}
-        onEdit={() => setIsEditing(true)}
-      />
-
-      {/* Main Content */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-        {/* Tabs */}
-        <div className="border-b border-gray-200">
-          <nav className="-mb-px flex">
-            {['profile', 'activity'].map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`
-                  py-4 px-6 text-sm font-medium border-b-2 whitespace-nowrap
-                  ${activeTab === tab
-                    ? 'border-red-500 text-red-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}
-                `}
-              >
-                {tab === 'profile' ? 'Profile Settings' : 'Activity Log'}
-              </button>
-            ))}
-          </nav>
-        </div>
-
-        {/* Tab Content */}
-        <div className="p-6">
-          {activeTab === 'profile' ? (
-            isEditing ? (
-              <SettingsForm
+    return (
+      <div className="min-h-screen bg-gray-50 p-6">
+          <div className="max-w-4xl mx-auto">
+              <ProfileHeader
                 user={student}
-                onSave={handleSaveProfile}
-                onCancel={() => setIsEditing(false)}
+                stats={stats}
+                showEdit={!isEditing}
+                onEdit={handleEditProfile}
               />
-            ) : (
-              <div className="space-y-6">
-                {/* Personal Information */}
-                <div>
-                  <h3 className="text-lg font-medium text-gray-900">Personal Information</h3>
-                  <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div>
-                      <span className="block text-sm font-medium text-gray-500">Full Name</span>
-                      <span className="block mt-1 text-sm text-gray-900">
-                        {student.firstName} {student.lastName}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="block text-sm font-medium text-gray-500">Email</span>
-                      <span className="block mt-1 text-sm text-gray-900">{student.email}</span>
-                    </div>
-                    <div>
-                      <span className="block text-sm font-medium text-gray-500">Target University</span>
-                      <span className="block mt-1 text-sm text-gray-900">{student.targetUniversity}</span>
-                    </div>
-                    <div>
-                      <span className="block text-sm font-medium text-gray-500">Target Course</span>
-                      <span className="block mt-1 text-sm text-gray-900">{student.targetCourse}</span>
-                    </div>
-                  </div>
-                </div>
 
-                {/* Subscription Details */}
-                <div className="pt-6 border-t border-gray-200">
-                  <h3 className="text-lg font-medium text-gray-900">Subscription Details</h3>
-                  <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div>
-                      <span className="block text-sm font-medium text-gray-500">Current Plan</span>
-                      <span className="block mt-1 text-sm text-gray-900">{student.subscription.plan}</span>
+              <div className="mt-6 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+                <div className="p-6">
+                    {isEditing ? (
+                        <ProfileEdit 
+                            user={student} 
+                            onCancel={handleCancelEdit} 
+                            onSave={handleSaveProfile} 
+                        />
+                    ) : (
+                    <div className="space-y-6">
+                        <div className="bg-gray-100 p-5 rounded-lg">
+                        <h3 className="text-xl font-bold text-gray-900 mb-4 border-b pb-2">
+                            Personal Information
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {[
+                                { label: 'Full Name', value: student?.userId?.name },
+                                { label: 'Email', value: student?.userId?.email },
+                                { label: 'Major', value: student?.major },
+                                { label: 'University', value: student?.university },
+                                ...(student?.bio ? [{ label: 'Bio', value: student?.bio }] : []),
+                                ...(student?.dateOfBirth ? 
+                                    [{ 
+                                        label: 'Date of Birth', 
+                                        value: new Date(student?.dateOfBirth).toLocaleDateString() 
+                                    }] : 
+                                    []
+                                )
+                            ].map((item, index) => (
+                                <div key={index} className="bg-white p-3 rounded-md shadow-sm">
+                                    <span className="block text-sm font-medium text-gray-500 mb-1">
+                                        {item.label}
+                                    </span>
+                                    <span className="block text-sm text-gray-900 font-semibold">
+                                        {item.value || 'Not provided'}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                        </div>
                     </div>
-                    <div>
-                      <span className="block text-sm font-medium text-gray-500">Valid Until</span>
-                      <span className="block mt-1 text-sm text-gray-900">
-                        {new Date(student.subscription.validUntil).toLocaleDateString()}
-                      </span>
-                    </div>
-                  </div>
+                    )}
                 </div>
               </div>
-            )
-          ) : (
-            <ActivityLog activities={activities} />
-          )}
-        </div>
+          </div>
       </div>
-    </div>
-  );
+    );
 };
 
 export default Profile;

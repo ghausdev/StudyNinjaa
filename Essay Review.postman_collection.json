@@ -1,0 +1,1120 @@
+{
+	"info": {
+		"_postman_id": "d985ee06-97e8-436c-a273-6a294a9fe0f5",
+		"name": "Essay Review",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "41485553",
+		"_collection_link": "https://planetary-station-979613.postman.co/workspace/New-Team-Workspace~8da4ebf9-c02d-4ac5-ab1e-3be9796cde2c/collection/39896188-d985ee06-97e8-436c-a273-6a294a9fe0f5?action=share&source=collection_link&creator=41485553"
+	},
+	"item": [
+		
+		{
+			"name": "Student",
+			"item": [
+				{
+					"name": "Login",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"email\": \"hassanafnan09@gmail.com\",\r\n  \"password\": \"YourSecurePassword123\"\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:9001/api/auth/login",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9001",
+							"path": [
+								"api",
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Login",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"email\": \"hassanafnan09@gmail.com\",\r\n  \"password\": \"YourSecurePassword123\"\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:9001/api/auth/login",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "9001",
+									"path": [
+										"api",
+										"auth",
+										"login"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "X-Powered-By",
+									"value": "Express"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "*"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "Content-Length",
+									"value": "78"
+								},
+								{
+									"key": "ETag",
+									"value": "W/\"4e-5ElygXmHOfez+IpI1L2+iDFRVpE\""
+								},
+								{
+									"key": "Date",
+									"value": "Wed, 22 Jan 2025 17:06:41 GMT"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=5"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"2FA code sent to your email.\",\n    \"userId\": \"6784216b835a8bb4750b3f1e\"\n}"
+						}
+					]
+				},
+				{
+					"name": "verify Login",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"userId\": \"6784216b835a8bb4750b3f1e\",\r\n  \"twoFAToken\": \"412889\"\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:9001/api/auth/verify2FA",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9001",
+							"path": [
+								"api",
+								"auth",
+								"verify2FA"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "verify Login",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"userId\": \"6784216b835a8bb4750b3f1e\",\r\n  \"twoFAToken\": \"481401\"\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:9001/api/auth/verify2FA",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "9001",
+									"path": [
+										"api",
+										"auth",
+										"verify2FA"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "X-Powered-By",
+									"value": "Express"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "*"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "Content-Length",
+									"value": "386"
+								},
+								{
+									"key": "ETag",
+									"value": "W/\"182-aOPU6W58J+5QLhHxXhkPPVbInG4\""
+								},
+								{
+									"key": "Date",
+									"value": "Wed, 22 Jan 2025 17:07:10 GMT"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=5"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"2FA verified successfully.\",\n    \"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2Nzg0MjE2YjgzNWE4YmI0NzUwYjNmMWUiLCJpYXQiOjE3Mzc1NjU2MzAsImV4cCI6MTczNzU2OTIzMH0.hrX9F3L4WAnwtKQoSVF0fjvV9PsPVToGMjlyhd6Vd3Q\",\n    \"user\": {\n        \"id\": \"6784216b835a8bb4750b3f1e\",\n        \"name\": \"Afnan Hassan\",\n        \"email\": \"hassanafnan09@gmail.com\",\n        \"role\": \"Student\",\n        \"phone\": \"+923464880929\",\n        \"emailVerified\": true\n    }\n}"
+						}
+					]
+				},
+				{
+					"name": "uploadEssay",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "title",
+									"value": "Impact of Artificial Intelligence on Education",
+									"type": "text"
+								},
+								{
+									"key": "subject",
+									"value": "Computer Science",
+									"type": "text"
+								},
+								{
+									"key": "academicLevel",
+									"value": "Graduate",
+									"type": "text"
+								},
+								{
+									"key": "studentRequest",
+									"value": "Please proofread and check for plagiarism.",
+									"type": "text"
+								},
+								{
+									"key": "files",
+									"type": "file",
+									"src": "/C:/Users/hassa/Downloads/StudyNinjaa_Final_Without_Reassignment_Cleaned.pdf"
+								}
+							]
+						},
+						"url": {
+							"raw": "http://localhost:9001/api/student/upload-essay",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9001",
+							"path": [
+								"api",
+								"student",
+								"upload-essay"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "New Request",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "title",
+											"value": "Impact of Artificial Intelligence on Education",
+											"type": "text"
+										},
+										{
+											"key": "subject",
+											"value": "Computer Science",
+											"type": "text"
+										},
+										{
+											"key": "academicLevel",
+											"value": "Bachelor",
+											"type": "text"
+										},
+										{
+											"key": "comments",
+											"value": "Please proofread and check for plagiarism.",
+											"type": "text"
+										},
+										{
+											"key": "files",
+											"type": "file",
+											"src": "/C:/Users/hassa/Downloads/StudyNinjaa_Final_Without_Reassignment_Cleaned.pdf"
+										},
+										{
+											"key": "studentRequest",
+											"value": "Feedback Only",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "http://localhost:9001/api/student/uploadEssay",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "9001",
+									"path": [
+										"api",
+										"student",
+										"uploadEssay"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "X-Powered-By",
+									"value": "Express"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "*"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "Content-Length",
+									"value": "679"
+								},
+								{
+									"key": "ETag",
+									"value": "W/\"2a7-IdlRZxq0LqyvMFopYxNwP4jFBw0\""
+								},
+								{
+									"key": "Date",
+									"value": "Tue, 21 Jan 2025 16:06:21 GMT"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=5"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"Essay uploaded successfully!\",\n    \"essay\": {\n        \"studentID\": \"6784216b835a8bb4750b3f1e\",\n        \"status\": \"Pending\",\n        \"title\": \"Impact of Artificial Intelligence on Education\",\n        \"subject\": \"Computer Science\",\n        \"wordCount\": 1157,\n        \"studentRequest\": \"Feedback Only\",\n        \"academicLevel\": \"Bachelor\",\n        \"comments\": \"Please proofread and check for plagiarism.\",\n        \"fileUrl\": \"https://studyninja.s3.ap-south-1.amazonaws.com/StudyNinjaa_Final_Without_Reassignment_Cleaned.pdf\",\n        \"score\": 0,\n        \"feedback\": \"\",\n        \"price\": 54.71,\n        \"platformCommission\": 5.47,\n        \"bundleID\": null,\n        \"modelURL\": null,\n        \"adjustedWordCount\": null,\n        \"_id\": \"678fc5fddc9647befba1325e\",\n        \"createdAt\": \"2025-01-21T16:06:21.796Z\",\n        \"updatedAt\": \"2025-01-21T16:06:21.796Z\",\n        \"__v\": 0\n    }\n}"
+						}
+					]
+				},
+				{
+					"name": "Update Profile",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
+				},
+				{
+					"name": "get all essays",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2Nzg0MjE2YjgzNWE4YmI0NzUwYjNmMWUiLCJpYXQiOjE3MzY3MTI2MDgsImV4cCI6MTczNjcxNjIwOH0.rNGQFTd6ZRtwj6vQnbXk4r4tpVNZBGmqFFrPcq5G4xk",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": []
+						},
+						"url": {
+							"raw": "http://localhost:9001/api/student//essays",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9001",
+							"path": [
+								"api",
+								"student",
+								"",
+								"essays"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "get all essays",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:9001/api/student//essays",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "9001",
+									"path": [
+										"api",
+										"student",
+										"",
+										"essays"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "X-Powered-By",
+									"value": "Express"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "*"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "Content-Length",
+									"value": "1337"
+								},
+								{
+									"key": "ETag",
+									"value": "W/\"539-lACzf6f4F8bPwidrBv3bC+9UvuQ\""
+								},
+								{
+									"key": "Date",
+									"value": "Wed, 22 Jan 2025 17:16:44 GMT"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=5"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"essays\": [\n        {\n            \"_id\": \"678fce790f70e103174bfe16\",\n            \"studentID\": \"6784216b835a8bb4750b3f1e\",\n            \"status\": \"Completed\",\n            \"title\": \"Impact of Artificial Intelligence on Education\",\n            \"subject\": \"Computer Science\",\n            \"wordCount\": 1157,\n            \"studentRequest\": \"Feedback Only\",\n            \"academicLevel\": \"Bachelor\",\n            \"comments\": \"Please proofread and check for plagiarism.\",\n            \"fileUrl\": \"https://studyninja.s3.ap-south-1.amazonaws.com/StudyNinjaa_Final_Without_Reassignment_Cleaned.pdf\",\n            \"score\": 10,\n            \"feedback\": \"Very Good essay man lov it\",\n            \"price\": 54.71,\n            \"platformCommission\": 5.47,\n            \"bundleID\": null,\n            \"modelURL\": null,\n            \"adjustedWordCount\": null,\n            \"createdAt\": \"2025-01-21T16:42:33.378Z\",\n            \"updatedAt\": \"2025-01-21T16:52:37.008Z\",\n            \"__v\": 0,\n            \"markedBy\": \"678fc0f7dff12e6adea22c65\"\n        },\n        {\n            \"_id\": \"679127c2dd14eb89b5d976c6\",\n            \"studentID\": \"6784216b835a8bb4750b3f1e\",\n            \"status\": \"Pending\",\n            \"title\": \"Impact of Artificial Intelligence on Education\",\n            \"subject\": \"Computer Science\",\n            \"wordCount\": 1157,\n            \"studentRequest\": \"Feedback Only\",\n            \"academicLevel\": \"Bachelor\",\n            \"comments\": \"Please proofread and check for plagiarism.\",\n            \"fileUrl\": \"https://studyninja.s3.ap-south-1.amazonaws.com/StudyNinjaa_Final_Without_Reassignment_Cleaned.pdf\",\n            \"score\": 0,\n            \"feedback\": \"\",\n            \"price\": 54.71,\n            \"platformCommission\": 5.47,\n            \"bundleID\": null,\n            \"modelURL\": null,\n            \"adjustedWordCount\": null,\n            \"createdAt\": \"2025-01-22T17:15:46.240Z\",\n            \"updatedAt\": \"2025-01-22T17:15:46.240Z\",\n            \"__v\": 0\n        }\n    ]\n}"
+						}
+					]
+				},
+				{
+					"name": "get profile",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2Nzg0MjE2YjgzNWE4YmI0NzUwYjNmMWUiLCJpYXQiOjE3MzY3MTI2MDgsImV4cCI6MTczNjcxNjIwOH0.rNGQFTd6ZRtwj6vQnbXk4r4tpVNZBGmqFFrPcq5G4xk",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:9001/api/student/profile",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9001",
+							"path": [
+								"api",
+								"student",
+								"profile"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "get profile",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2Nzg0MjE2YjgzNWE4YmI0NzUwYjNmMWUiLCJpYXQiOjE3MzY3MTI2MDgsImV4cCI6MTczNjcxNjIwOH0.rNGQFTd6ZRtwj6vQnbXk4r4tpVNZBGmqFFrPcq5G4xk",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "file",
+									"file": {},
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:9001/api/student/profile",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "9001",
+									"path": [
+										"api",
+										"student",
+										"profile"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "X-Powered-By",
+									"value": "Express"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "*"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "Content-Length",
+									"value": "491"
+								},
+								{
+									"key": "ETag",
+									"value": "W/\"1eb-TmaIx0C7LBoHLUPad8nm8+v+dCE\""
+								},
+								{
+									"key": "Date",
+									"value": "Wed, 22 Jan 2025 17:17:08 GMT"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=5"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"Student profile retrieved successfully\",\n    \"student\": {\n        \"_id\": \"678421b5835a8bb4750b3f28\",\n        \"userId\": {\n            \"_id\": \"6784216b835a8bb4750b3f1e\",\n            \"name\": \"Afnan Hassan\",\n            \"email\": \"hassanafnan09@gmail.com\"\n        },\n        \"major\": \"Biology2\",\n        \"university\": \"Harvard University\",\n        \"bio\": \"I am passionate about biology and research.\",\n        \"profilePicture\": \"https://studyninja.s3.ap-south-1.amazonaws.com/Screenshot%202024-11-01%20030238.png\",\n        \"createdAt\": \"2025-01-12T20:10:29.168Z\",\n        \"updatedAt\": \"2025-01-12T20:10:29.168Z\",\n        \"__v\": 0\n    }\n}"
+						}
+					]
+				},
+				{
+					"name": "get pending essay",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2Nzg0MjE2YjgzNWE4YmI0NzUwYjNmMWUiLCJpYXQiOjE3MzY3MTI2MDgsImV4cCI6MTczNjcxNjIwOH0.rNGQFTd6ZRtwj6vQnbXk4r4tpVNZBGmqFFrPcq5G4xk",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:9001/api/student//essays/pending",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9001",
+							"path": [
+								"api",
+								"student",
+								"",
+								"essays",
+								"pending"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "get pending essay",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:9001/api/student//essays/pending",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "9001",
+									"path": [
+										"api",
+										"student",
+										"",
+										"essays",
+										"pending"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "X-Powered-By",
+									"value": "Express"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "*"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "Content-Length",
+									"value": "641"
+								},
+								{
+									"key": "ETag",
+									"value": "W/\"281-/5RBxI1lOTjck1tG2M2+li3+txY\""
+								},
+								{
+									"key": "Date",
+									"value": "Wed, 22 Jan 2025 17:16:55 GMT"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=5"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"essays\": [\n        {\n            \"_id\": \"679127c2dd14eb89b5d976c6\",\n            \"studentID\": \"6784216b835a8bb4750b3f1e\",\n            \"status\": \"Pending\",\n            \"title\": \"Impact of Artificial Intelligence on Education\",\n            \"subject\": \"Computer Science\",\n            \"wordCount\": 1157,\n            \"studentRequest\": \"Feedback Only\",\n            \"academicLevel\": \"Bachelor\",\n            \"comments\": \"Please proofread and check for plagiarism.\",\n            \"fileUrl\": \"https://studyninja.s3.ap-south-1.amazonaws.com/StudyNinjaa_Final_Without_Reassignment_Cleaned.pdf\",\n            \"score\": 0,\n            \"feedback\": \"\",\n            \"price\": 54.71,\n            \"platformCommission\": 5.47,\n            \"bundleID\": null,\n            \"modelURL\": null,\n            \"adjustedWordCount\": null,\n            \"createdAt\": \"2025-01-22T17:15:46.240Z\",\n            \"updatedAt\": \"2025-01-22T17:15:46.240Z\",\n            \"__v\": 0\n        }\n    ]\n}"
+						}
+					]
+				},
+				{
+					"name": "set Tutoring Session",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2Nzg0MjE2YjgzNWE4YmI0NzUwYjNmMWUiLCJpYXQiOjE3Mzc1NjU2MzAsImV4cCI6MTczNzU2OTIzMH0.hrX9F3L4WAnwtKQoSVF0fjvV9PsPVToGMjlyhd6Vd3Q",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"tutorId\": \"678fc0f7dff12e6adea22c65\",\r\n    \"purpose\": \"Algebra Review\",\r\n    \"startTime\": \"2025-01-27T14:00:00Z\",\r\n    \"endTime\": \"2025-01-27T15:00:00Z\"\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:9001/api/student/createTutoringSession",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9001",
+							"path": [
+								"api",
+								"student",
+								"createTutoringSession"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "set Tutoring Session",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"tutorId\": \"678fc0f7dff12e6adea22c65\",\r\n    \"purpose\": \"Algebra Review\",\r\n    \"startTime\": \"2025-01-27T09:00:00Z\",\r\n    \"endTime\": \"2025-01-27T10:00:00Z\"\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:9001/api/student/createTutoringSession",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "9001",
+									"path": [
+										"api",
+										"student",
+										"createTutoringSession"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "X-Powered-By",
+									"value": "Express"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "*"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "Content-Length",
+									"value": "297"
+								},
+								{
+									"key": "ETag",
+									"value": "W/\"129-6Z87YRsrNn6erUokwdCaphJiMGA\""
+								},
+								{
+									"key": "Date",
+									"value": "Wed, 22 Jan 2025 17:20:20 GMT"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=5"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"tutoringSession\": {\n        \"tutorId\": \"678fc0f7dff12e6adea22c65\",\n        \"studentId\": \"678421b5835a8bb4750b3f28\",\n        \"purpose\": \"Algebra Review\",\n        \"meetingLink\": \"\",\n        \"startTime\": \"2025-01-27T09:00:00.000Z\",\n        \"endTime\": \"2025-01-27T10:00:00.000Z\",\n        \"_id\": \"679128d4dd14eb89b5d976de\",\n        \"createdAt\": \"2025-01-22T17:20:20.373Z\",\n        \"__v\": 0\n    }\n}"
+						}
+					]
+				},
+				{
+					"name": "get Tutors for Tutoring",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": [
+						{
+							"name": "get Tutors for Tutoring",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:9001/api/tutor/getTutorProfilesforTutoring",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "9001",
+									"path": [
+										"api",
+										"tutor",
+										"getTutorProfilesforTutoring"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "X-Powered-By",
+									"value": "Express"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "*"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "Content-Length",
+									"value": "563"
+								},
+								{
+									"key": "ETag",
+									"value": "W/\"233-KcQds/CGI/xxEbgI+WnH9YuaCxg\""
+								},
+								{
+									"key": "Date",
+									"value": "Wed, 22 Jan 2025 17:18:34 GMT"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=5"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"message\": \"Tutors retrieved successfully.\",\n    \"tutors\": [\n        {\n            \"fullName\": \"Afnan Hassan\",\n            \"university\": \"Harvard University\",\n            \"experience\": 5,\n            \"studyLevel\": \"PhD\",\n            \"profilePicture\": \"https://studyninja.s3.ap-south-1.amazonaws.com/Screenshot%20%2810%29.png\",\n            \"subject\": \"Mathematics\",\n            \"hourlyRate\": 50,\n            \"availability\": {\n                \"monday\": [\n                    \"09:00-10:00\",\n                    \"15:00-16:00\"\n                ],\n                \"tuesday\": [\n                    \"10:00-11:00\"\n                ],\n                \"wednesday\": [],\n                \"thursday\": [],\n                \"friday\": [\n                    \"08:00-09:00\"\n                ],\n                \"saturday\": [\n                    \"16:00-17:00\"\n                ],\n                \"sunday\": []\n            },\n            \"description\": \"Experienced math tutor specializing in high school and college-level math.\",\n            \"duration\": 60\n        }\n    ]\n}"
+						}
+					]
+				},
+				{
+					"name": "getDashBoard",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": [
+						{
+							"name": "New Request",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:9001/api/student/getDashboard",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "9001",
+									"path": [
+										"api",
+										"student",
+										"getDashboard"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "X-Powered-By",
+									"value": "Express"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "*"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "Content-Length",
+									"value": "71"
+								},
+								{
+									"key": "ETag",
+									"value": "W/\"47-lMhvkdwiWIFxeR6fZw0oP2dw9Pw\""
+								},
+								{
+									"key": "Date",
+									"value": "Wed, 22 Jan 2025 17:07:24 GMT"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=5"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"essaysSubmitted\": 0,\n    \"interviewsCompleted\": 0,\n    \"averagePercentage\": \"0 %\"\n}"
+						}
+					]
+				},
+				{
+					"name": "give Rating",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2Nzg0MjE2YjgzNWE4YmI0NzUwYjNmMWUiLCJpYXQiOjE3Mzc1NjU2MzAsImV4cCI6MTczNzU2OTIzMH0.hrX9F3L4WAnwtKQoSVF0fjvV9PsPVToGMjlyhd6Vd3Q",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"type\": \"essay\",\r\n    \"ratings\": 5,\r\n    \"feedback\": \"The essay was insightful and well-structured.\",\r\n    \"essayId\": \"67912e0aff789e38df1a35ed\"\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:9001/api/student/giveRating",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9001",
+							"path": [
+								"api",
+								"student",
+								"giveRating"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get Pending ratings",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2Nzg0MjE2YjgzNWE4YmI0NzUwYjNmMWUiLCJpYXQiOjE3Mzc1NjU2MzAsImV4cCI6MTczNzU2OTIzMH0.hrX9F3L4WAnwtKQoSVF0fjvV9PsPVToGMjlyhd6Vd3Q",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:9001/api/student/getPendingRating",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9001",
+							"path": [
+								"api",
+								"student",
+								"getPendingRating"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "New Request",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "http://localhost:9001/api/student/getPendingRating",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "9001",
+									"path": [
+										"api",
+										"student",
+										"getPendingRating"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "X-Powered-By",
+									"value": "Express"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "*"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "Content-Length",
+									"value": "708"
+								},
+								{
+									"key": "ETag",
+									"value": "W/\"2c4-GP667u3UrPAaior5YvPg0HNTOvs\""
+								},
+								{
+									"key": "Date",
+									"value": "Wed, 22 Jan 2025 17:51:21 GMT"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=5"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"essay\": [\n        {\n            \"_id\": \"67912e0aff789e38df1a35ed\",\n            \"studentID\": \"6784216b835a8bb4750b3f1e\",\n            \"status\": \"Completed\",\n            \"title\": \"Impact of Artificial Intelligence on Education\",\n            \"subject\": \"Computer Science\",\n            \"wordCount\": 229,\n            \"studentRequest\": \"Feedback Only\",\n            \"academicLevel\": \"GCSE\",\n            \"comments\": \"Please do a good analysis\",\n            \"fileUrl\": \"https://studyninja.s3.ap-south-1.amazonaws.com/lab-11%20%281%29.pdf\",\n            \"score\": 9.5,\n            \"feedback\": \"Great improvement, but work on sentence structure.\",\n            \"price\": 11.45,\n            \"platformCommission\": 1.15,\n            \"bundleID\": null,\n            \"modelURL\": null,\n            \"adjustedWordCount\": null,\n            \"rated\": false,\n            \"createdAt\": \"2025-01-22T17:42:34.124Z\",\n            \"updatedAt\": \"2025-01-22T17:47:26.270Z\",\n            \"__v\": 0,\n            \"markedBy\": \"678fc0f7dff12e6adea22c65\"\n        }\n    ],\n    \"tutoring\": []\n}"
+						}
+					]
+				},
+				{
+					"name": "http://localhost:9001/api/student/uploadEssay",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2Nzg0MjE2YjgzNWE4YmI0NzUwYjNmMWUiLCJpYXQiOjE3Mzc3NDE0OTUsImV4cCI6MTczNzgyNzg5NX0.JC2s7oYBIG04J-l3AfGftjeXN-wKUeFx_lMi6WiXzFA",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "title",
+									"value": "Impact of Artificial Intelligence on Education",
+									"type": "text"
+								},
+								{
+									"key": "subject",
+									"value": "Computer Science",
+									"type": "text"
+								},
+								{
+									"key": "academicLevel",
+									"value": "Bachelor",
+									"type": "text"
+								},
+								{
+									"key": "comments",
+									"value": "Please proofread and check for plagiarism.",
+									"type": "text"
+								},
+								{
+									"key": "files",
+									"type": "file",
+									"src": "/C:/Users/ghaus/Documents/API_Documentation.pdf"
+								},
+								{
+									"key": "studentRequest",
+									"value": "Feedback Only",
+									"type": "text"
+								},
+								{
+									"key": "files",
+									"type": "file",
+									"src": "/C:/Users/ghaus/Documents/API_Documentation.pdf"
+								}
+							]
+						},
+						"url": {
+							"raw": "http://localhost:9001/api/student/uploadEssay",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9001",
+							"path": [
+								"api",
+								"student",
+								"uploadEssay"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+		
+	]
+}

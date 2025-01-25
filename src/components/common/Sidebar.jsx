@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { NAVIGATION } from '../../constants/navigation';
 import logo from '../../assets/logo.jpg';
 
-const Sidebar = ({ userRole = 'STUDENT' }) => {
+const Sidebar = ({ userRole = 'STUDENT', isMobileOpen, onClose }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const location = useLocation();
 
@@ -53,82 +53,94 @@ const Sidebar = ({ userRole = 'STUDENT' }) => {
   };
 
   return (
-    <div
-      className={`
-        h-screen bg-white border-r border-gray-200 transition-all duration-300
-        ${isCollapsed ? 'w-20' : 'w-64'}
-        fixed left-0 top-0 z-30
-      `}
-    >
-      <button
-        onClick={() => setIsCollapsed(!isCollapsed)}
-        className="absolute -right-3 top-10 bg-white border border-gray-200 rounded-full p-1 shadow-md"
+    <>
+      {/* Mobile overlay */}
+      {isMobileOpen && (
+        <div
+          className="fixed inset-0 bg-gray-600 bg-opacity-75 z-30 lg:hidden"
+          onClick={onClose}
+        />
+      )}
+      
+      <div
+        className={`
+          h-screen bg-white border-r border-gray-200 transition-all duration-300
+          fixed lg:relative
+          ${isCollapsed ? 'w-20' : 'w-64'}
+          ${isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+          left-0 top-0 z-40
+        `}
       >
-        <svg
-          className={`w-4 h-4 text-gray-600 transform transition-transform ${isCollapsed ? 'rotate-180' : ''}`}
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
+        <button
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className="absolute -right-3 top-10 bg-white border border-gray-200 rounded-full p-1 shadow-md"
         >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-        </svg>
-      </button>
+          <svg
+            className={`w-4 h-4 text-gray-600 transform transition-transform ${isCollapsed ? 'rotate-180' : ''}`}
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
 
-      <div className={`
-        flex items-center justify-center h-16 border-b border-gray-200
-        ${isCollapsed ? 'px-2' : 'px-6'}
-      `}>
-        <Link to="/" className="flex items-center">
-          <img 
-            src={logo} 
-            alt="StudyNINJAA Logo" 
-            className={`transition-all duration-300 ${isCollapsed ? 'h-8 w-8' : 'h-64 w-64'}`}
-          />
-        </Link>
+        <div className={`
+          flex items-center justify-center h-16 border-b border-gray-200
+          ${isCollapsed ? 'px-2' : 'px-6'}
+        `}>
+          <Link to="/" className="flex items-center">
+            <img 
+              src={logo} 
+              alt="StudyNINJAA Logo" 
+              className={`transition-all duration-300 ${isCollapsed ? 'h-8 w-8' : 'h-64 w-64'}`}
+            />
+          </Link>
+        </div>
+
+        <nav className="flex flex-col justify-between h-[calc(100vh-4rem)] px-4 py-6">
+          <div className="space-y-2">
+            {navigation.PRIMARY.map((item) => (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`
+                  flex items-center px-3 py-2 rounded-lg transition-colors duration-200
+                  ${isActivePath(item.path)
+                    ? 'bg-red-50 text-red-600'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}
+                `}
+              >
+                <span className="flex-shrink-0">{icons[item.icon]}</span>
+                {!isCollapsed && (
+                  <span className="ml-3 text-sm font-medium">{item.name}</span>
+                )}
+              </Link>
+            ))}
+          </div>
+
+          <div className="space-y-2 border-t border-gray-200 pt-4">
+            {navigation.SECONDARY?.map((item) => (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`
+                  flex items-center px-3 py-2 rounded-lg transition-colors duration-200
+                  ${isActivePath(item.path)
+                    ? 'bg-red-50 text-red-600'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}
+                `}
+              >
+                <span className="flex-shrink-0">{icons[item.icon]}</span>
+                {!isCollapsed && (
+                  <span className="ml-3 text-sm font-medium">{item.name}</span>
+                )}
+              </Link>
+            ))}
+          </div>
+        </nav>
       </div>
-
-      <nav className="flex flex-col justify-between h-[calc(100vh-4rem)] px-4 py-6">
-        <div className="space-y-2">
-          {navigation.PRIMARY.map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`
-                flex items-center px-3 py-2 rounded-lg transition-colors duration-200
-                ${isActivePath(item.path)
-                  ? 'bg-red-50 text-red-600'
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}
-              `}
-            >
-              <span className="flex-shrink-0">{icons[item.icon]}</span>
-              {!isCollapsed && (
-                <span className="ml-3 text-sm font-medium">{item.name}</span>
-              )}
-            </Link>
-          ))}
-        </div>
-
-        <div className="space-y-2 border-t border-gray-200 pt-4">
-          {navigation.SECONDARY?.map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`
-                flex items-center px-3 py-2 rounded-lg transition-colors duration-200
-                ${isActivePath(item.path)
-                  ? 'bg-red-50 text-red-600'
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}
-              `}
-            >
-              <span className="flex-shrink-0">{icons[item.icon]}</span>
-              {!isCollapsed && (
-                <span className="ml-3 text-sm font-medium">{item.name}</span>
-              )}
-            </Link>
-          ))}
-        </div>
-      </nav>
-    </div>
+    </>
   );
 };
 

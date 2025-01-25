@@ -10,8 +10,13 @@ const TutorOnboarding = () => {
     }],
     rightToWork: {
       hasRight: null,
+      nationality: '',
       documentType: '',
-      documentFile: null
+      documentFile: null,
+      niNumber: '',
+      shareCode: '',
+      dateOfBirth: '',
+      passportExpired: false,
     },
     dbsCheck: {
       hasDBS: null,
@@ -25,13 +30,27 @@ const TutorOnboarding = () => {
   const [loading, setLoading] = useState(false);
 
   const qualificationLevels = ['GCSE', 'A-Level', 'Bachelor', 'Masters', 'PhD'];
-  const documentTypes = [
-    { value: 'passport', label: 'British/Irish Passport' },
-    { value: 'brp', label: 'Biometric Residence Permit' },
-    { value: 'visa', label: 'Work/Skilled Visa' },
-    { value: 'settlement', label: 'EU Settlement Certificate' },
-    { value: 'shareCode', label: 'Share Code' }
+  const nationalityOptions = [
+    { value: 'british-irish', label: 'British or Irish Citizen' },
+    { value: 'eu-eea', label: 'EU, EEA, or Swiss Citizen' },
+    { value: 'other', label: 'Other Nationalities' }
   ];
+
+  const documentTypes = {
+    'british-irish': [
+      { value: 'passport', label: 'Passport' },
+      { value: 'birth-cert', label: 'UK Birth Certificate' },
+      { value: 'adoption-cert', label: 'UK Adoption Certificate' }
+    ],
+    'eu-eea': [
+      { value: 'share-code', label: 'Share Code' },
+      { value: 'passport', label: 'Valid Passport' }
+    ],
+    'other': [
+      { value: 'brp', label: 'Biometric Residence Permit' },
+      { value: 'visa', label: 'Valid Visa with Work Authorization' }
+    ]
+  };
 
   const handleChange = (e) => {
     const { name, value, type, checked, files } = e.target;
@@ -73,11 +92,9 @@ const TutorOnboarding = () => {
         }
         break;
       case 2:
-        if (formData.rightToWork.hasRight === null) {
-          newErrors.rightToWork = 'Please indicate your right to work status';
-        }
-        if (formData.rightToWork.hasRight && !formData.rightToWork.documentFile) {
-          newErrors.rightToWorkDoc = 'Please upload proof of right to work';
+        const rightToWorkErrors = validateRightToWork();
+        if (Object.keys(rightToWorkErrors).length > 0) {
+          newErrors.rightToWork = rightToWorkErrors;
         }
         if (formData.dbsCheck.hasDBS === null) {
           newErrors.dbsCheck = 'Please indicate your DBS check status';
@@ -88,6 +105,69 @@ const TutorOnboarding = () => {
         break;
     }
     return newErrors;
+  };
+
+  const validateRightToWork = () => {
+    const errors = {};
+    const { rightToWork } = formData;
+
+    if (rightToWork.hasRight === null) {
+      errors.hasRight = 'Please indicate your right to work status';
+      return errors;
+    }
+
+    if (!rightToWork.hasRight) {
+      errors.hasRight = 'You must have the right to work in the UK to continue';
+      return errors;
+    }
+
+    if (!rightToWork.nationality) {
+      errors.nationality = 'Please select your nationality';
+      return errors;
+    }
+
+    switch (rightToWork.nationality) {
+      case 'british-irish':
+        if (rightToWork.documentType === 'birth-cert' && !rightToWork.niNumber) {
+          errors.niNumber = 'NI Number is required for birth certificate uploads';
+        }
+        if (!rightToWork.documentFile) {
+          errors.documentFile = 'Please upload your identification document';
+        }
+        break;
+
+      case 'eu-eea':
+        if (rightToWork.documentType === 'share-code') {
+          if (!rightToWork.shareCode) errors.shareCode = 'Share code is required';
+          if (!rightToWork.dateOfBirth) errors.dateOfBirth = 'Date of birth is required';
+        } else if (!rightToWork.documentFile) {
+          errors.documentFile = 'Please upload your valid passport';
+        }
+        break;
+
+      case 'other':
+        if (!rightToWork.documentFile) {
+          errors.documentFile = 'Please upload your BRP or valid visa';
+        }
+        break;
+    }
+
+    if (rightToWork.documentFile) {
+      const fileError = validateFileUpload(rightToWork.documentFile);
+      if (fileError) errors.documentFile = fileError;
+    }
+
+    return errors;
+  };
+
+  const validateFileUpload = (file) => {
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png'];
+    
+    if (!file) return 'File is required';
+    if (file.size > maxSize) return 'File size must be less than 5MB';
+    if (!allowedTypes.includes(file.type)) return 'File must be PDF, JPEG, or PNG';
+    return null;
   };
 
   const handleNextStep = () => {
@@ -239,7 +319,7 @@ const TutorOnboarding = () => {
                 <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
                   <h3 className="text-lg font-medium text-gray-900 mb-4">Right to Work Verification</h3>
                   <div className="space-y-4">
-                    <div>
+                    <div className="mb-6">
                       <label className="text-gray-700 text-sm font-semibold block">
                         Do you have the right to work in the UK? <span className="text-red-500">*</span>
                       </label>
@@ -262,28 +342,113 @@ const TutorOnboarding = () => {
                     </div>
 
                     {formData.rightToWork.hasRight && (
-                      <div className="space-y-4">
-                        <select
-                          name="rightToWork.documentType"
-                          value={formData.rightToWork.documentType}
-                          onChange={handleChange}
-                          className="w-full rounded-lg border-gray-300 focus:border-red-500 focus:ring focus:ring-red-200"
-                        >
-                          <option value="">Select document type</option>
-                          {documentTypes.map(doc => (
-                            <option key={doc.value} value={doc.value}>{doc.label}</option>
-                          ))}
-                        </select>
-                        <div className="mt-2">
-                          <input
-                            type="file"
-                            name="rightToWork.documentFile"
+                      <>
+                        <div className="mb-6">
+                          <label className="text-gray-700 text-sm font-semibold block">
+                            Select your nationality status <span className="text-red-500">*</span>
+                          </label>
+                          <select
+                            name="rightToWork.nationality"
+                            value={formData.rightToWork.nationality}
                             onChange={handleChange}
-                            accept=".pdf,.jpg,.jpeg,.png"
-                            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100"
-                          />
+                            className="mt-1 w-full rounded-lg border-gray-300 focus:border-red-500 focus:ring focus:ring-red-200"
+                          >
+                            <option value="">Select nationality status</option>
+                            {nationalityOptions.map(option => (
+                              <option key={option.value} value={option.value}>{option.label}</option>
+                            ))}
+                          </select>
                         </div>
-                      </div>
+
+                        {formData.rightToWork.nationality && (
+                          <div className="space-y-4">
+                            <select
+                              name="rightToWork.documentType"
+                              value={formData.rightToWork.documentType}
+                              onChange={handleChange}
+                              className="w-full rounded-lg border-gray-300 focus:border-red-500 focus:ring focus:ring-red-200"
+                            >
+                              <option value="">Select document type</option>
+                              {documentTypes[formData.rightToWork.nationality].map(doc => (
+                                <option key={doc.value} value={doc.value}>{doc.label}</option>
+                              ))}
+                            </select>
+
+                            <div className="bg-blue-50 p-4 rounded-lg text-sm text-blue-700">
+                              <h4 className="font-semibold mb-2">Document Requirements:</h4>
+                              <ul className="list-disc pl-5 space-y-1">
+                                <li>Entire document must be visible, including all edges</li>
+                                <li>High-quality image with no blurriness or shadows</li>
+                                <li>All text must be clearly legible</li>
+                                <li>Maximum file size: 5MB</li>
+                                <li>Accepted formats: PDF, JPEG, PNG</li>
+                              </ul>
+                            </div>
+
+                            {formData.rightToWork.nationality === 'british-irish' && (
+                              <div>
+                                <label className="text-gray-700 text-sm font-semibold block">
+                                  NI Number <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                  type="text"
+                                  name="rightToWork.niNumber"
+                                  value={formData.rightToWork.niNumber}
+                                  onChange={handleChange}
+                                  className="mt-1 w-full rounded-lg border-gray-300 focus:border-red-500 focus:ring focus:ring-red-200"
+                                />
+                              </div>
+                            )}
+
+                            {formData.rightToWork.nationality === 'eu-eea' && (
+                              <div>
+                                <label className="text-gray-700 text-sm font-semibold block">
+                                  Share Code <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                  type="text"
+                                  name="rightToWork.shareCode"
+                                  value={formData.rightToWork.shareCode}
+                                  onChange={handleChange}
+                                  className="mt-1 w-full rounded-lg border-gray-300 focus:border-red-500 focus:ring focus:ring-red-200"
+                                />
+                              </div>
+                            )}
+
+                            {formData.rightToWork.nationality === 'eu-eea' && (
+                              <div>
+                                <label className="text-gray-700 text-sm font-semibold block">
+                                  Date of Birth <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                  type="text"
+                                  name="rightToWork.dateOfBirth"
+                                  value={formData.rightToWork.dateOfBirth}
+                                  onChange={handleChange}
+                                  className="mt-1 w-full rounded-lg border-gray-300 focus:border-red-500 focus:ring focus:ring-red-200"
+                                />
+                              </div>
+                            )}
+
+                            {formData.rightToWork.nationality === 'british-irish' && (
+                              <div>
+                                <label className="text-gray-700 text-sm font-semibold block">
+                                  Passport Expired <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                  type="checkbox"
+                                  name="rightToWork.passportExpired"
+                                  checked={formData.rightToWork.passportExpired}
+                                  onChange={() => handleChange({
+                                    target: { name: 'rightToWork.passportExpired', value: !formData.rightToWork.passportExpired }
+                                  })}
+                                  className="text-red-600 focus:ring-red-500"
+                                />
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>

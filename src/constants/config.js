@@ -12,8 +12,8 @@
     // File Upload Configurations
     UPLOAD: {
       MAX_FILE_SIZE: 5 * 1024 * 1024, // 5MB
-      ALLOWED_FILE_TYPES: ['.pdf', '.doc', '.docx'],
-      MAX_FILES: 1
+      ALLOWED_FILE_TYPES: ['.pdf'],
+      MAX_FILES: 2
     },
   
     // UI Configuration

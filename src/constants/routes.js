@@ -20,7 +20,8 @@ export const ROUTES = {
       ESSAY_UPLOAD: '/student/essay-upload',
       ESSAYS: '/student/essays',
       INTERVIEWS: '/student/interviews',
-      PROFILE: '/student/profile'
+      PROFILE: '/student/profile',
+      TUTOR_LIST: '/student/tutor-list'
     },
   
     // Tutor Routes

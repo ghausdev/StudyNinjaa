@@ -31,17 +31,23 @@ export const NAVIGATION = {
          icon: 'upload'
        },
        {
-         name: 'Interviews',
+         name: 'Tutoring Sessions',
          path: ROUTES.STUDENT.INTERVIEWS,
          icon: 'calendar'
-       }
+       },
+       {
+        name: 'Tutor List',
+        path: ROUTES.STUDENT.TUTOR_LIST,
+        icon: 'user'
+      }
      ],
      SECONDARY: [
        {
          name: 'Profile',
          path: ROUTES.STUDENT.PROFILE,
          icon: 'user'
-       }
+       },
+       
      ]
    },
 

@@ -1,226 +1,199 @@
 // InterviewScheduler.js
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Calendar from '../../components/interviews/Calendar';
-import TimeSlotPicker from '../../components/interviews/TimeSlotPicker';
-import InterviewCard from '../../components/interviews/InterviewCard';
+import StudentService from '../../services/studentService';
 import { formatters } from '../../utils/formatters';
-
-// Import mock data
-import { mockInterviews } from '../../data/mockInterviews';
 
 const InterviewScheduler = () => {
   const [selectedDate, setSelectedDate] = useState(null);
-  const [selectedSlot, setSelectedSlot] = useState(null);
-  const [selectedType, setSelectedType] = useState('');
+  const [allSessions, setAllSessions] = useState([]);
+  const [upcomingSessions, setUpcomingSessions] = useState([]);
+  const [completedSessions, setCompletedSessions] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [selectedDaySessions, setSelectedDaySessions] = useState([]);
+  const [activeTab, setActiveTab] = useState('upcoming');
 
-  // Mock available dates (in real app, fetch from API)
-  const availableDates = [
-    new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // Day after tomorrow
-    new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
-    new Date(Date.now() + 4 * 24 * 60 * 60 * 1000)
-  ];
+  // Fetch all sessions data
+  useEffect(() => {
+    const fetchSessions = async () => {
+      setLoading(true);
+      try {
+        const [allData, upcomingData, completedData] = await Promise.all([
+          StudentService.getTutoringSessions(),
+          StudentService.getUpcomingTutoringSessions(),
+          StudentService.getCompletedTutoringSessions()
+        ]);
 
-  // Mock time slots
-  const generateTimeSlots = (date) => {
-    if (!date) return [];
-    return [
-      { id: 1, startTime: `${date.toISOString().split('T')[0]}T09:00:00Z`, duration: 45 },
-      { id: 2, startTime: `${date.toISOString().split('T')[0]}T10:00:00Z`, duration: 45 },
-      { id: 3, startTime: `${date.toISOString().split('T')[0]}T14:00:00Z`, duration: 45 },
-      { id: 4, startTime: `${date.toISOString().split('T')[0]}T15:00:00Z`, duration: 45 }
-    ];
-  };
+        setAllSessions(allData.tutoringSessions);
+        setUpcomingSessions(upcomingData.tutoringSessions);
+        setCompletedSessions(completedData.tutoringSessions);
+      } catch (error) {
+        console.error('Error fetching sessions:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  // Interview types
-  const interviewTypes = [
-    { id: 'mmi', name: 'Multiple Mini Interview (MMI)', duration: 45 },
-    { id: 'panel', name: 'Panel Interview', duration: 45 },
-    { id: 'one-on-one', name: 'One-on-One Interview', duration: 45 }
-  ];
+    fetchSessions();
+  }, []);
 
-  // Get upcoming interviews
-  const upcomingInterviews = mockInterviews.filter(
-    interview => new Date(interview.datetime) > new Date() && interview.status === 'scheduled'
-  );
-
-  // Handle booking submission
-  const handleBookInterview = async () => {
-    if (!selectedDate || !selectedSlot || !selectedType) return;
-
-    setLoading(true);
-    try {
-      // Mock API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      // Success handling (redirect to interviews list)
-      console.log('Interview booked successfully');
-    } catch (error) {
-      console.error('Failed to book interview');
-    } finally {
-      setLoading(false);
+  // Update selected day sessions when date is selected
+  useEffect(() => {
+    if (selectedDate) {
+      const sessionsOnDay = allSessions.filter(session => {
+        const sessionDate = new Date(session.startTime).toDateString();
+        const selectedDateString = selectedDate.toDateString();
+        return sessionDate === selectedDateString;
+      });
+      setSelectedDaySessions(sessionsOnDay);
     }
+  }, [selectedDate, allSessions]);
+
+  // Get available dates from all sessions
+  const availableDates = [...new Set(allSessions.map(session => 
+    new Date(session.startTime).toDateString()
+  ))].map(dateStr => new Date(dateStr));
+
+  const handleGiveRating = (sessionId) => {
+    // Implement rating functionality
+    console.log('Give rating for session:', sessionId);
   };
 
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h1 className="text-2xl font-bold text-gray-900">Schedule Interview</h1>
-        <p className="mt-1 text-sm text-gray-500">
-          Book a mock interview session with our experienced tutors
-        </p>
-      </div>
+  const handleJoinMeeting = (meetingLink) => {
+    window.open(meetingLink, '_blank');
+  };
 
-      {/* Main Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Left Column - Calendar and Time Slots */}
-        <div className="space-y-6">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h2 className="text-lg font-medium text-gray-900 mb-4">Select Date and Time</h2>
-            
-            {/* Calendar */}
-            <Calendar
-              selectedDate={selectedDate}
-              onDateSelect={setSelectedDate}
-              availableDates={availableDates}
-              disabledDates={[]}
-            />
+  const SessionCard = ({ session }) => {
+    const isCompleted = new Date(session.endTime) < new Date();
+    const needsRating = isCompleted && !session.rated;
 
-            {/* Time Slot Picker */}
-            <div className="mt-6">
-              <TimeSlotPicker
-                selectedDate={selectedDate}
-                availableSlots={generateTimeSlots(selectedDate)}
-                selectedSlot={selectedSlot}
-                onSlotSelect={setSelectedSlot}
-              />
-            </div>
+    return (
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4">
+        <div className="flex justify-between items-start">
+          <div>
+            <h3 className="font-medium text-gray-900">{session.purpose}</h3>
+            <p className="text-sm text-gray-500">
+              {formatters.formatDate(new Date(session.startTime))} {' '}
+              {formatters.formatTime(new Date(session.startTime))} - {' '}
+              {formatters.formatTime(new Date(session.endTime))}
+            </p>
           </div>
-        </div>
-
-        {/* Right Column - Interview Type and Booking */}
-        <div className="space-y-6">
-          {/* Interview Type Selection */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h2 className="text-lg font-medium text-gray-900 mb-4">Interview Type</h2>
-            <div className="space-y-4">
-              {interviewTypes.map((type) => (
-                <div
-                  key={type.id}
-                  className={`relative rounded-lg border p-4 cursor-pointer transition-colors
-                    ${selectedType === type.id
-                      ? 'border-red-500 bg-red-50'
-                      : 'border-gray-200 hover:border-gray-300'
-                    }
-                  `}
-                  onClick={() => setSelectedType(type.id)}
-                >
-                  <div className="flex justify-between">
-                    <div>
-                      <h3 className="text-sm font-medium text-gray-900">{type.name}</h3>
-                      <p className="text-sm text-gray-500 mt-1">{type.duration} minutes</p>
-                    </div>
-                    <div className="flex items-center">
-                      <div
-                        className={`h-4 w-4 rounded-full border flex items-center justify-center
-                          ${selectedType === type.id
-                            ? 'border-red-500 bg-red-500'
-                            : 'border-gray-300'
-                          }
-                        `}
-                      >
-                        {selectedType === type.id && (
-                          <div className="h-2 w-2 rounded-full bg-white" />
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Booking Summary */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h2 className="text-lg font-medium text-gray-900 mb-4">Summary</h2>
-            {selectedDate && selectedSlot && selectedType ? (
-              <div className="space-y-4">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Date:</span>
-                  <span className="text-gray-900 font-medium">
-                    {formatters.formatDate(selectedDate)}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Time:</span>
-                  <span className="text-gray-900 font-medium">
-                    {formatters.formatTime(new Date(selectedSlot.startTime))}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Type:</span>
-                  <span className="text-gray-900 font-medium">
-                    {interviewTypes.find(t => t.id === selectedType)?.name}
-                  </span>
-                </div>
-                <button
-                  onClick={handleBookInterview}
-                  disabled={loading}
-                  className="mt-6 w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {loading ? (
-                    <div className="flex items-center">
-                      <svg
-                        className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        />
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        />
-                      </svg>
-                      Booking Interview...
-                    </div>
-                  ) : (
-                    'Book Interview'
-                  )}
-                </button>
-              </div>
-            ) : (
-              <p className="text-sm text-gray-500">
-                Please select a date, time, and interview type to continue
-              </p>
+          <div className="space-x-2">
+            {!isCompleted && session.meetingLink && (
+              <button
+                onClick={() => handleJoinMeeting(session.meetingLink)}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              >
+                Join Meeting
+              </button>
+            )}
+            {needsRating && (
+              <button
+                onClick={() => handleGiveRating(session._id)}
+                className="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700"
+              >
+                Give Rating
+              </button>
             )}
           </div>
         </div>
       </div>
+    );
+  };
 
-      {/* Upcoming Interviews */}
-      {upcomingInterviews.length > 0 && (
-        <div className="space-y-4">
-          <h2 className="text-lg font-medium text-gray-900">Upcoming Interviews</h2>
-          {upcomingInterviews.map((interview) => (
-            <InterviewCard
-              key={interview.id}
-              interview={interview}
-              onJoin={(id) => console.log('Join interview:', id)}
-              onCancel={(id) => console.log('Cancel interview:', id)}
-              onReschedule={(id) => console.log('Reschedule interview:', id)}
-            />
-          ))}
+  return (
+    <div className="space-y-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* Header */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Tutoring Sessions</h1>
+        <p className="mt-1 text-sm text-gray-500">
+          View and manage your tutoring sessions
+        </p>
+      </div>
+
+      {/* Main Content */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        {/* Left Column - Calendar */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+          <h2 className="text-lg font-medium text-gray-900 mb-4">Select Date</h2>
+          <Calendar
+            selectedDate={selectedDate}
+            onDateSelect={setSelectedDate}
+            availableDates={availableDates}
+            disabledDates={[]}
+          />
         </div>
-      )}
+
+        {/* Right Column - Sessions for Selected Date */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+          <h2 className="text-lg font-medium text-gray-900 mb-4">
+            {selectedDate 
+              ? `Sessions for ${formatters.formatDate(selectedDate)}`
+              : 'Select a date to view sessions'}
+          </h2>
+          {selectedDaySessions.length > 0 ? (
+            selectedDaySessions.map(session => (
+              <SessionCard key={session._id} session={session} />
+            ))
+          ) : (
+            <p className="text-gray-500">No sessions scheduled for this date</p>
+          )}
+        </div>
+      </div>
+
+      {/* Sessions Toggle Section */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+        {/* Toggle Tabs */}
+        <div className="border-b border-gray-200">
+          <nav className="-mb-px flex" aria-label="Tabs">
+            <button
+              onClick={() => setActiveTab('all')}
+              className={`w-1/2 py-4 px-1 text-center border-b-2 font-medium text-sm ${
+                activeTab === 'all'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              All Sessions
+            </button>
+            <button
+              onClick={() => setActiveTab('upcoming')}
+              className={`w-1/2 py-4 px-1 text-center border-b-2 font-medium text-sm ${
+                activeTab === 'upcoming'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Upcoming Sessions
+            </button>
+          </nav>
+        </div>
+
+        {/* Sessions Content */}
+        <div className="p-4 sm:p-6">
+          {activeTab === 'all' ? (
+            <div className="space-y-4">
+              {allSessions.length > 0 ? (
+                allSessions.map(session => (
+                  <SessionCard key={session._id} session={session} />
+                ))
+              ) : (
+                <p className="text-gray-500">No sessions found</p>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {upcomingSessions.length > 0 ? (
+                upcomingSessions.map(session => (
+                  <SessionCard key={session._id} session={session} />
+                ))
+              ) : (
+                <p className="text-gray-500">No upcoming sessions</p>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

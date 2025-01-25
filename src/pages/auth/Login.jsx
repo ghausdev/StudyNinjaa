@@ -72,6 +72,7 @@ const Login = () => {
     try {
       const response = await AuthService.verify2FA(userId, formData.verificationCode);
       login(response.user, response.token);
+      console.log(response.user.role);
       navigate(`/${response.user.role}/dashboard`);
     } catch (error) {
       setErrors({ submit: error.message || 'Verification failed' });

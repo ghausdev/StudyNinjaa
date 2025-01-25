@@ -1,49 +1,87 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import Sidebar from '../components/common/Sidebar';
+import { useAuth } from '../contexts/AuthContext'; // Import useAuth to check user role
+import Dashboard from '../pages/student/Dashboard';
+import EssayList from '../pages/student/EssayList';
 
 const DashboardLayout = ({ role, userType = 'student-tutor' }) => {
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
   const [currentRole, setCurrentRole] = useState(role);
   const navigate = useNavigate();
+  const { user, isAuthenticated, isStudent, isTutor, isAdmin, logout } = useAuth(); // Use useAuth to get user info
 
   const isStudentTutor = userType === 'student-tutor';
   const userRole = currentRole === 'tutor' ? 'TUTOR' : currentRole === 'admin' ? 'ADMIN' : 'STUDENT';
 
+  // Handle role switch (e.g., between student and tutor)
   const handleRoleSwitch = (newRole) => {
     setCurrentRole(newRole);
     navigate(`/${newRole}/dashboard`);
   };
 
+  // Handle logout
   const handleLogout = () => {
+    logout(); // Call the logout function from AuthContext
     navigate('/login');
   };
 
+  // Ensure the user is authenticated and has the correct role
+  useEffect(() => {
+    console.log('isAuthenticated:', isAuthenticated);
+    console.log('isStudent:', isStudent);
+    console.log('isTutor:', isTutor);
+    console.log('isAdmin:', isAdmin);
+    console.log('user:', user);
+    console.log('role:', role);
+    console.log('currentRole:', currentRole);
+    console.log('userRole:', userRole);
+    console.log('isStudentTutor:', isStudentTutor);
+    if (!isAuthenticated) {
+      navigate('/login'); // Redirect to login if not authenticated
+    } else if (role === 'student' && !isStudent) {
+      console.log('Current user role:', user?.role); // Add this for debugging
+      navigate('/'); // Redirect to home if the user is not a student
+    } else if (role === 'tutor' && !isTutor) {
+      navigate('/'); // Redirect to home if the user is not a tutor
+    } else if (role === 'admin' && !isAdmin) {
+      navigate('/'); // Redirect to home if the user is not an admin
+    } else {
+      console.log('Current user role:', user?.role); // Add this for debugging
+    }
+  }, [isAuthenticated, isStudent, isTutor, isAdmin, navigate, role, user]);
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Sidebar userRole={userRole} />
+    <div className="min-h-screen bg-gray-50 flex">
+      {/* Sidebar */}
+      <Sidebar 
+        userRole={userRole} 
+        isMobileOpen={showMobileSidebar}
+        onClose={() => setShowMobileSidebar(false)}
+      />
 
-      {showMobileSidebar && (
-        <div
-          className="fixed inset-0 bg-gray-600 bg-opacity-75 z-20 lg:hidden"
-          onClick={() => setShowMobileSidebar(false)}
-        />
-      )}
+      {/* Main Content */}
+      <div className="flex-1 min-w-0">
+        {/* Header */}
+        <header className="bg-white shadow-sm">
+          <div className="flex items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+            {/* Left side content */}
+            <div>
+              {/* Mobile Menu Button */}
+              <button
+                onClick={() => setShowMobileSidebar(true)}
+                className="lg:hidden inline-flex items-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+              >
+                <span className="sr-only">Open menu</span>
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
+                </svg>
+              </button>
+            </div>
 
-      <div className="lg:pl-64">
-        <header className="bg-white shadow-sm ">
-          <div className="flex items-center justify-end px-4 py-4 sm:px-6 lg:px-8 ">
-            <button
-              onClick={() => setShowMobileSidebar(true)}
-              className="lg:hidden inline-flex items-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-            >
-              <span className="sr-only">Open menu</span>
-              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
-              </svg>
-            </button>
-
-            <div className="flex justify-around gap-4 ">
+            {/* Right side content */}
+            <div className="flex items-center gap-4">
+              {/* Role Switch Buttons (for student-tutor users) */}
               {isStudentTutor && (
                 <div className="flex items-center bg-gray-100 p-1 rounded-lg">
                   <button
@@ -81,6 +119,7 @@ const DashboardLayout = ({ role, userType = 'student-tutor' }) => {
                 </div>
               )}
 
+              {/* Logout Button */}
               <button
                 onClick={handleLogout}
                 className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors duration-200"
@@ -95,14 +134,16 @@ const DashboardLayout = ({ role, userType = 'student-tutor' }) => {
           </div>
         </header>
 
+        {/* Main Content Area */}
         <main className="py-6">
           <div className="mx-auto px-4 sm:px-6 lg:px-8">
             <div className="min-h-[80vh]">
-              <Outlet />
+              <Outlet /> {/* Nested routes will be rendered here */}
             </div>
           </div>
         </main>
 
+        {/* Footer */}
         <footer className="bg-white border-t border-gray-200">
           <div className="mx-auto px-4 sm:px-6 lg:px-8">
             <div className="py-4 text-center text-sm text-gray-500">
@@ -113,6 +154,6 @@ const DashboardLayout = ({ role, userType = 'student-tutor' }) => {
       </div>
     </div>
   );
- };
+};
 
- export default DashboardLayout;
+export default DashboardLayout;
