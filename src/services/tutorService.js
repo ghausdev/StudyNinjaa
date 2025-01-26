@@ -334,7 +334,7 @@ getAllChatContacts: async () => {
  */
 getMessages: async (studentId) => {
     try {
-        const response = await api.get(`/tutor/getMessagesForTutor/${studentId}`);
+        const response = await api.get(`/tutor/messages/${studentId}`);
         return response.data;
     } catch (error) {
         throw error.response.data;

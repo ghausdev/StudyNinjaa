@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:9001/api',
+  baseURL: 'https://studyninja-backend.onrender.com/api',
   headers: {
     'Accept': 'application/json',
   }
