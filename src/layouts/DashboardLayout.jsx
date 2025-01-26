@@ -135,8 +135,8 @@ const DashboardLayout = ({ role, userType = 'student-tutor' }) => {
         </header>
 
         {/* Main Content Area */}
-        <main className="py-6">
-          <div className="mx-auto px-4 sm:px-6 lg:px-8">
+        <main className="">
+          <div className="">
             <div className="min-h-[80vh]">
               <Outlet /> {/* Nested routes will be rendered here */}
             </div>

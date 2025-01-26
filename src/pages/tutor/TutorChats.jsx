@@ -1,124 +1,127 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import TutorService from '../../services/tutorService';
-import { io } from 'socket.io-client';
-import { useAuth } from '../../contexts/AuthContext';
+import React, { useState, useEffect, useRef } from "react"
+import { Link } from "react-router-dom"
+import TutorService from "../../services/tutorService"
+import { io } from "socket.io-client"
+import { useAuth } from "../../contexts/AuthContext"
 
 const TutorChats = () => {
-  const { user } = useAuth();
-  const [chats, setChats] = useState([]);
-  const [selectedChat, setSelectedChat] = useState(null);
-  const [newMessage, setNewMessage] = useState('');
-  const [messages, setMessages] = useState([]);
-  const [socket, setSocket] = useState(null);
+  const { user } = useAuth()
+  const [chats, setChats] = useState([])
+  const [selectedChat, setSelectedChat] = useState(null)
+  const [newMessage, setNewMessage] = useState("")
+  const [messages, setMessages] = useState([])
+  const [socket, setSocket] = useState(null)
+  const messagesEndRef = useRef(null)
+  const chatListRef = useRef(null)
+  const messagesAreaRef = useRef(null)
 
   useEffect(() => {
-    // Initialize socket connection
-    const newSocket = io('http://localhost:9001', {
+    const newSocket = io("http://localhost:9001", {
       auth: {
-        token: localStorage.getItem('token')
-      }
-    });
-    setSocket(newSocket);
+        token: localStorage.getItem("token"),
+      },
+    })
+    setSocket(newSocket)
+    loadChats()
 
-    // Load initial chats
-    loadChats();
-
-    return () => newSocket.disconnect();
-  }, []);
+    return () => newSocket.disconnect()
+  }, [])
 
   useEffect(() => {
-    if (!socket || !user) return;
+    if (!socket || !user) return
 
-    // Join tutor's room using their ID
-    socket.emit('join', user._id);
+    socket.emit("join", user._id)
 
-    // Listen for new messages
-    socket.on('receiveMessage', (message) => {
-      setMessages(prev => [...prev, {
-        id: message._id,
-        sender: message.sender === user._id ? 'tutor' : 'student',
-        message: message.content,
-        timestamp: new Date(message.timestamp),
-      }]);
-    });
+    socket.on("receiveMessage", (message) => {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: message._id,
+          sender: message.sender,
+          content: message.content,
+          timestamp: new Date(message.timestamp),
+        },
+      ])
+    })
 
     return () => {
-      socket.off('receiveMessage');
-    };
-  }, [socket, user]);
+      socket.off("receiveMessage")
+    }
+  }, [socket, user])
+
+  useEffect(() => {
+    scrollToBottom()
+  }, [messagesEndRef]) //Corrected dependency
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }
 
   const loadChats = async () => {
     try {
-      const response = await TutorService.getAllChatContacts();
-      setChats(response.students.map(student => ({
-        id: student._id,
-        studentName: student.name,
-        essayTitle: 'Essay Review',
-        profilePic: student.profilePicture || `https://ui-avatars.com/api/?name=${student.name}`,
-        timestamp: new Date(),
-        lastMessage: '',
-        unread: 0
-      })));
+      const response = await TutorService.getAllChatContacts()
+      console.log("chats", response)
+      setChats(
+        response.students.map((student) => ({
+          id: student._id,
+          studentName: student.name,
+ 
+          profilePic: student.profilePicture || `https://ui-avatars.com/api/?name=${student.name}`,
+          timestamp: new Date(),
+          lastMessage: "",
+          unread: 0,
+        })),
+      )
     } catch (error) {
-      console.error('Error loading chats:', error);
+      console.error("Error loading chats:", error)
     }
-  };
+  }
 
   const loadMessages = async (studentId) => {
     try {
-      const response = await TutorService.getMessages(studentId);
-      setMessages(response.messages.map(msg => ({
-        id: msg._id,
-        sender: msg.sender === user._id ? 'tutor' : 'student',
-        content: msg.content,
-        timestamp: new Date(msg.timestamp),
-      })));
+      const response = await TutorService.getMessages(studentId)
+      setMessages(
+        response.messages.map((msg) => ({
+          id: msg._id,
+          sender: msg.sender ,
+          content: msg.content,
+          timestamp: new Date(msg.timestamp),
+        })),
+      )
     } catch (error) {
-      console.error('Error loading messages:', error);
+      console.error("Error loading messages:", error)
     }
-  };
+  }
 
   const handleSendMessage = async () => {
-    if (!newMessage.trim() || !selectedChat || !socket || !user) return;
+    if (!newMessage.trim() || !selectedChat || !socket || !user) return
 
     try {
-        // Emit message to socket
-        console.log(user);
-        socket.emit('sendMessage', {
-            sender: user.id,
-            recipient: selectedChat.id,
-            content: newMessage.trim(),
-        });
+      socket.emit("sendMessage", {
+        sender: user.id,
+        recipient: selectedChat.id,
+        content: newMessage.trim(),
+      })
 
-        // Clear input immediately
-        setNewMessage('');
+      setNewMessage("")
     } catch (error) {
-        console.error('Error sending message:', error);
+      console.error("Error sending message:", error)
     }
-  };
+  }
 
   const handleChatSelect = (chat) => {
-    setSelectedChat(chat);
-    loadMessages(chat.id);
-  };
+    setSelectedChat(chat)
+    loadMessages(chat.id)
+  }
 
   return (
-    <div className="h-[calc(100vh-64px)]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Essay Chats</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Communicate with students about their essays
-          </p>
-        </div>
+    <div className="flex flex-col h-screen">
 
-        {/* Chat Interface */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 h-[calc(100vh-200px)]">
-          <div className="grid grid-cols-12 h-full">
-            {/* Chat List */}
-            <div className="col-span-4 border-r border-gray-200">
+
+      <div className="flex-1 overflow-hidden">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 h-full flex flex-col">
+          <div className="grid grid-cols-12 flex-1 overflow-hidden">
+            <div className="col-span-4 border-r border-gray-200 flex flex-col overflow-hidden">
               <div className="p-4 border-b">
                 <input
                   type="text"
@@ -126,19 +129,19 @@ const TutorChats = () => {
                   className="w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500"
                 />
               </div>
-              <div className="overflow-y-auto h-[calc(100%-73px)]">
+              <div className="flex-1 overflow-y-auto" ref={chatListRef}>
                 {chats.map((chat) => (
                   <div
                     key={chat.id}
-                    onClick={() => setSelectedChat(chat)}
+                    onClick={() => handleChatSelect(chat)}
                     className={`p-4 border-b cursor-pointer hover:bg-gray-50 ${
-                      selectedChat?.id === chat.id ? 'bg-red-50' : ''
+                      selectedChat?.id === chat.id ? "bg-red-50" : ""
                     }`}
                   >
                     <div className="flex justify-between items-start">
                       <div className="flex items-start space-x-3">
                         <img
-                          src={chat.profilePic}
+                          src={chat.profilePic || "/placeholder.svg"}
                           alt={chat.studentName}
                           className="w-10 h-10 rounded-full"
                         />
@@ -149,7 +152,7 @@ const TutorChats = () => {
                       </div>
                       <div className="flex flex-col items-end">
                         <span className="text-xs text-gray-500">
-                          {chat.timestamp?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) || ''}
+                          {chat.timestamp?.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) || ""}
                         </span>
                         {chat.unread > 0 && (
                           <span className="bg-red-500 text-white text-xs rounded-full px-2 py-1 mt-1">
@@ -164,15 +167,13 @@ const TutorChats = () => {
               </div>
             </div>
 
-            {/* Chat Messages */}
-            <div className="col-span-8 flex flex-col h-full">
+            <div className="col-span-8 flex flex-col overflow-hidden">
               {selectedChat ? (
                 <>
-                  {/* Chat Header */}
                   <div className="p-4 border-b">
                     <div className="flex items-center space-x-3">
                       <img
-                        src={selectedChat.profilePic}
+                        src={selectedChat.profilePic || "/placeholder.svg"}
                         alt={selectedChat.studentName}
                         className="w-12 h-12 rounded-full"
                       />
@@ -183,30 +184,22 @@ const TutorChats = () => {
                     </div>
                   </div>
 
-                  {/* Messages Area */}
-                  <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                  <div className="flex-1 overflow-y-auto p-4 space-y-4" ref={messagesAreaRef}>
                     {messages.map((msg) => (
-                      <div
-                        key={msg.id}
-                        className={`flex ${msg.sender === 'tutor' ? 'justify-end' : 'justify-start'}`}
-                      >
+                      <div key={msg.id} className={`flex ${msg.sender === "tutor" ? "justify-end" : "justify-start"}`}>
                         <div
                           className={`max-w-[75%] rounded-lg p-3 ${
-                            msg.sender === 'tutor'
-                              ? 'bg-red-100 text-red-900'
-                              : 'bg-gray-100 text-gray-900'
+                            msg.sender === "tutor" ? "bg-red-100 text-red-900" : "bg-gray-100 text-gray-900"
                           }`}
                         >
                           <p className="text-sm">{msg.content}</p>
-                          <p className="text-xs text-gray-500 mt-1">
-                            {msg.timestamp?.toLocaleTimeString() || ''}
-                          </p>
+                          <p className="text-xs text-gray-500 mt-1">{msg.timestamp?.toLocaleTimeString() || ""}</p>
                         </div>
                       </div>
                     ))}
+                    <div ref={messagesEndRef} />
                   </div>
 
-                  {/* Message Input */}
                   <div className="p-4 border-t">
                     <div className="flex space-x-2">
                       <input
@@ -215,7 +208,7 @@ const TutorChats = () => {
                         onChange={(e) => setNewMessage(e.target.value)}
                         placeholder="Type a message..."
                         className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500"
-                        onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                        onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
                       />
                       <button
                         onClick={handleSendMessage}
@@ -236,7 +229,8 @@ const TutorChats = () => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default TutorChats; 
+export default TutorChats
+
