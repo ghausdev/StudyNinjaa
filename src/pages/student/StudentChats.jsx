@@ -63,7 +63,7 @@ const StudentChats = () => {
       const response = await StudentService.getMessages(chat._id);
       setMessages(response.messages.map(msg => ({
         id: msg._id,
-        sender: msg.sender === user._id ? 'student' : 'tutor',
+        sender: msg.sender,
         content: msg.content,
         timestamp: new Date(msg.timestamp)
       })));
