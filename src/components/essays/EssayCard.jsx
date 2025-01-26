@@ -1,11 +1,9 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { formatters } from '../../utils/formatters';
 import { helpers } from '../../utils/helpers';
 
 const EssayCard = ({
     essay,
-    onViewPdf,
     showActions = true
 }) => {
     const statusColors = {
@@ -40,20 +38,19 @@ const EssayCard = ({
 
                 {/* Submission Details */}
                 <div className="mb-4">
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <p className="text-gray-500">Submitted</p>
-                      <p className="font-medium text-gray-900">
-                           {formatters.formatDateTime(essay.createdAt)}
-                      </p>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <p className="text-gray-500">Submitted</p>
+                            <p className="font-medium text-gray-900">
+                                {helpers.formatDateTime(essay.createdAt)}
+                            </p>
+                        </div>
                     </div>
-                  </div>
                 </div>
 
                 {/* Action Buttons */}
                 {showActions && (
                     <div className="flex items-center justify-end space-x-3 mt-4">
-
                         <Link
                             to={`/student/essay/${essay._id}`}
                             className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700"
@@ -63,7 +60,6 @@ const EssayCard = ({
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                             </svg>
                         </Link>
-                       
                     </div>
                 )}
             </div>

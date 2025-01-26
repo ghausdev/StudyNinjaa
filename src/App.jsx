@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 
 // Layouts
@@ -19,7 +19,7 @@ import Privacy from './pages/common/Privacy';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import ForgotPassword from './pages/auth/ForgotPassword';
-import TutorOnboarding from './pages/auth/TutorOnboarding';
+import TutorOnboarding from './pages/auth/TutorOnboard/TutorOnboarding.jsx';
 import VerifyEmail from './pages/auth/VerifyEmail';
 import ResetPassword from './pages/auth/ResetPassword';
 
@@ -38,15 +38,17 @@ import InterviewManagement from './pages/tutor/InterviewManagement';
 import TutorProfile from './pages/tutor/Profile';
 import EssayPool from './pages/tutor/EssayPool';
 import TutorChat from './pages/tutor/TutorChat.jsx';
-
+import TutoringProfile from './pages/tutor/TutoringProfile';
+import TutorChats from './pages/tutor/TutorChats';
 // Admin Pages
 import AdminDashboard from './pages/admin/Dashboard';
 import UserManagement from './pages/admin/UserManagement';
 import TransactionManagement from './pages/admin/TransactionManagement';
 import ContentManagement from './pages/admin/ContentManagement';
+import StudentChats from './pages/student/StudentChats';
 
 function App() {
-    const { isAuthenticated, isStudent, isTutor, isAdmin } = useAuth();
+    const { isAuthenticated, isStudent, isTutor, isAdmin, user } = useAuth();
 
     return (
         <Router>
@@ -63,12 +65,53 @@ function App() {
 
                 {/* Auth Routes */}
                 <Route element={<AuthLayout />}>
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/register" element={<Register />} />
-                    <Route path="/tutoronboarding" element={<TutorOnboarding />} />
-                    <Route path="/forgot-password" element={<ForgotPassword />} />
-                     <Route path="/verify-email" element={<VerifyEmail />} />
-                      <Route path="/reset-password/:resetToken" element={<ResetPassword />} />
+                    <Route 
+                        path="/login" 
+                        element={
+                            isAuthenticated 
+                                ? <Navigate to={`/${user?.role}/dashboard`} replace /> 
+                                : <Login />
+                        } 
+                    />
+                    <Route 
+                        path="/register" 
+                        element={
+                            isAuthenticated 
+                                ? <Navigate to={`/${user?.role}/dashboard`} replace /> 
+                                : <Register />
+                        } 
+                    />
+                    <Route 
+                        path="/forgot-password" 
+                        element={
+                            isAuthenticated 
+                                ? <Navigate to={`/${user?.role}/dashboard`} replace /> 
+                                : <ForgotPassword />
+                        } 
+                    />
+
+                    <Route
+                        path="/tutor-onboarding"
+                        element={
+                            isAuthenticated && user?.role === 'tutor' && !user?.onboardingCompleted ? (
+                                <TutorOnboarding />
+                            ) : (
+                                <Navigate 
+                                    to={
+                                        !isAuthenticated 
+                                            ? '/login' 
+                                            : user?.role === 'tutor' && user?.onboardingCompleted 
+                                                ? '/tutor/dashboard'
+                                                : `/${user?.role}/dashboard`
+                                    } 
+                                    replace 
+                                />
+                            )
+                        }
+                    />
+                    
+                    <Route path="/verify-email" element={<VerifyEmail />} />
+                    <Route path="/reset-password/:resetToken" element={<ResetPassword />} />
                 </Route>
 
                 {/* Student Routes */}
@@ -129,58 +172,47 @@ function App() {
                                 : <Navigate to="/login" replace />
                         }
                     />
+                    <Route
+                        path="/student/chats"
+                        element={
+                            isAuthenticated && isStudent
+                                ? <StudentChats />
+                                : <Navigate to="/login" replace />
+                        }
+                    />
+                    
                </Route>
 
 
                 {/* Tutor Routes */}
                   <Route element = {<DashboardLayout role = "tutor" />} >
                     <Route
-                        path="/tutor/dashboard"
+                        path="/tutor/*"
                         element={
-                            isAuthenticated && isTutor
-                                ? <TutorDashboard />
-                                : <Navigate to="/login" replace />
+                            isAuthenticated && isTutor && user?.onboardingCompleted ? (
+                                <Routes>
+                                    <Route path="dashboard" element={<TutorDashboard />} />
+                                    <Route path="essay-pool" element={<EssayPool />} />
+                                    <Route path="chat/:essayId" element={<TutorChat />} />
+                                    <Route path="essay-feedback" element={<EssayFeedback />} />
+                                    <Route path="interviews" element={<InterviewManagement />} />
+                                    <Route path="profile" element={<TutorProfile />} />
+                                    <Route path="tutoring-profile" element={<TutoringProfile />} />
+                                    <Route path="chats" element={<TutorChats />} />
+                                </Routes>
+                            ) : (
+                                <Navigate 
+                                    to={
+                                        !isAuthenticated 
+                                            ? '/login' 
+                                            : user?.role === 'tutor' && !user?.onboardingCompleted 
+                                                ? '/tutor-onboarding'
+                                                : '/'
+                                    } 
+                                    replace 
+                                />
+                            )
                         }
-                    />
-                   <Route
-                        path="/tutor/essay-pool"
-                        element={
-                            isAuthenticated && isTutor
-                                ? <EssayPool />
-                                : <Navigate to="/login" replace />
-                        }
-                    />
-                    <Route
-                        path="/tutor/chat/:essayId"
-                        element={
-                            isAuthenticated && isTutor
-                                ? <TutorChat />
-                                : <Navigate to="/login" replace />
-                        }
-                    />
-                    <Route
-                        path="/tutor/essay-feedback"
-                        element={
-                            isAuthenticated && isTutor
-                                ? <EssayFeedback />
-                                : <Navigate to="/login" replace />
-                        }
-                    />
-                    <Route
-                        path="/tutor/interviews"
-                        element={
-                             isAuthenticated && isTutor
-                                ? <InterviewManagement />
-                                : <Navigate to="/login" replace />
-                         }
-                    />
-                    <Route
-                        path="/tutor/profile"
-                         element={
-                            isAuthenticated && isTutor
-                                ? <TutorProfile />
-                                : <Navigate to="/login" replace />
-                          }
                     />
               </Route>
 

@@ -63,10 +63,11 @@ const TutorService = {
     },
     /**
      * @description Gets the tutor profile of the logged in tutor.
-     * @returns {Promise<object>} - Returns a promise containing the message and the tutor profile object
+     * @returns {Promise<object>} - Returns a promise containing the message and tutor object
+     *  
+}
      * @throws {Error} - If there is an error during the fetch.
      */
-
     getTutorProfile: async () => {
         try {
             const response = await api.get('/tutor/getProfile');
@@ -76,29 +77,63 @@ const TutorService = {
         }
     },
     /**
-     * @description Marks an essay.
-     * @param {object} data - Data to mark the essay.
-     * @param {string} data.essayID - ID of the essay.
-     * @param {string} data.feedback - Feedback for the essay.
-     * @param {number} data.score - Score given to the essay.
-     * @param {File} data.modelAnswerFile - Model answer file (optional if the request is only for feedback).
-     * @returns {Promise<object>} - Returns a promise containing the message and the updated essay.
-     * @throws {Error} - If there is an error during the marking.
+     * @description Updates the tutor's profile
+     * @param {object} data - Profile data
+     * @param {string} data.university - University name
+     * @param {string} data.qualification - Qualification
+     * @param {string} data.bio - Bio text
+     * @param {File} data.profilePicture - Profile picture file
+     * @param {array} data.specializations - Array of specializations
+     * @param {array} data.availability - Array of availability slots
+     * @returns {Promise<object>} - Returns updated tutor profile
+     * @throws {Error} - If there is an error during update
      */
-    markEssay: async (data) => {
+    updateProfile: async (data) => {
         const formData = new FormData();
-        for(const key in data) {
+        for (const key in data) {
             if (data[key] instanceof File) {
-                formData.append(key, data[key])
-            }else{
-              formData.append(key, data[key]);
+                formData.append(key, data[key]);
+            } else if (Array.isArray(data[key])) {
+                formData.append(key, JSON.stringify(data[key]));
+            } else if (data[key] != null) {
+                formData.append(key, data[key]);
             }
         }
         try {
+            const response = await api.post('/tutor/updateProfile', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+            return response.data;
+        } catch (error) {
+            throw error.response.data;
+        }
+    },
+    /**
+     * @description Marks an essay
+     * @param {object} data - Essay marking data
+     * @param {string} data.essayID - ID of the essay
+     * @param {number} data.score - Score given to the essay
+     * @param {string} data.feedback - Feedback text
+     * @param {File} [data.modelAnswerFile] - Model answer file (optional)
+     * @returns {Promise<object>} - Returns a promise containing the message and updated essay
+     * @throws {Error} - If there is an error during marking
+     */
+    markEssay: async (data) => {
+        const formData = new FormData();
+        formData.append('essayID', data.essayID);
+        formData.append('score', data.score);
+        formData.append('feedback', data.feedback);
+        if (data.modelAnswerFile) {
+            formData.append('modelAnswerFile', data.modelAnswerFile);
+        }
+        
+        try {
             const response = await api.post('/tutor/markEssay', formData, {
-              headers: {
-                'Content-Type': 'multipart/form-data'
-              }
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
             });
             return response.data;
         } catch (error) {
@@ -123,13 +158,13 @@ const TutorService = {
     },
 
      /**
-     * @description Fetches in progress essays of the tutor
+     * @description Fetches all essays of the tutor
      * @returns {Promise<object>} - Returns a promise containing the message and the array of essays
      * @throws {Error} - If there is an error during the fetch.
      */
-    getInProgressEssays: async () => {
+    getAllEssays: async () => {
         try {
-            const response = await api.get('/tutor/getInProgressEssays');
+            const response = await api.get('/tutor/getAllEssays');
             return response.data;
         } catch (error) {
             throw error.response.data;
@@ -253,6 +288,73 @@ const TutorService = {
             throw error.response.data;
         }
     },
+
+  updateTutorProfile: async (data) => {
+    const formData = new FormData();
+    for (const key in data) {
+        if (key === 'subjects') {
+            formData.append(key, JSON.stringify(data[key]));
+        } else if (data[key] instanceof File) {
+            formData.append(key, data[key]);
+        } else if (data[key] != null) {
+            formData.append(key, data[key]);
+        }
+    }
+    try {
+        const response = await api.patch('/tutor/updateTutorProfile', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });
+        return response.data;
+    } catch (error) {
+        throw error.response.data;
+    }
+},
+
+/**
+ * @description Fetches all chat contacts for the tutor
+ * @returns {Promise<object>} - Returns a promise containing the students array
+ * @throws {Error} - If there is an error during the fetch
+ */
+getAllChatContacts: async () => {
+    try {
+        const response = await api.get('/tutor/getAllContactsForTutor');
+        return response.data;
+    } catch (error) {
+        throw error.response.data;
+    }
+},
+
+/**
+ * @description Fetches messages between tutor and student
+ * @param {string} studentId - ID of the student
+ * @returns {Promise<object>} - Returns a promise containing the messages array
+ * @throws {Error} - If there is an error during the fetch
+ */
+getMessages: async (studentId) => {
+    try {
+        const response = await api.get(`/tutor/getMessagesForTutor/${studentId}`);
+        return response.data;
+    } catch (error) {
+        throw error.response.data;
+    }
+},
+
+/**
+ * @description Accepts an essay for marking
+ * @param {string} essayID - ID of the essay.
+ * @returns {Promise<object>} - Returns a promise containing the message and essay object.
+ * @throws {Error} - If there is an error during the acceptance.
+ */
+acceptEssay: async (essayID) => {
+    try {
+        const response = await api.post('/tutor/getEssay', { essayID });
+        return response.data;
+    } catch (error) {
+        throw error.response.data;
+    }
+},
 };
 
 export default TutorService;

@@ -1,20 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { mockEssays } from '../../data/mockEssays';
+import TutorService from '../../services/tutorService';
 
 const QUALIFICATION_LEVELS = [
   { value: 'all', label: 'All Levels' },
-  { value: 'gcse', label: 'GCSE' },
-  { value: 'alevel', label: 'A-Level' },
-  { value: 'masters', label: 'Masters' },
-  { value: 'phd', label: 'PhD' }
+  { value: 'GCSE', label: 'GCSE' },
+  { value: 'A-Level', label: 'A-Level' },
+  { value: 'Bachelor', label: 'Bachelor' },
+  { value: 'Master', label: 'Master' },
+  { value: 'PhD', label: 'PhD' }
 ];
 
 const SUBJECTS = {
-  gcse: ['English Literature', 'Mathematics', 'Science', 'History'],
-  alevel: ['English Literature', 'Mathematics', 'Physics', 'Chemistry', 'History'],
-  masters: ['Literature', 'Engineering', 'Business', 'Computer Science'],
-  phd: ['Research Topics', 'Thesis Review']
+  GCSE: ['English Literature', 'Mathematics', 'Science', 'History'],
+  'A-Level': ['English Literature', 'Mathematics', 'Physics', 'Chemistry', 'History'],
+  Bachelor: ['Literature', 'Engineering', 'Business', 'Computer Science'],
+  Master: ['Advanced Engineering', 'Business Administration', 'Literature'],
+  PhD: ['Research Topics', 'Thesis Review']
 };
 
 const EssayPool = () => {
@@ -26,15 +28,14 @@ const EssayPool = () => {
     searchQuery: ''
   });
   const [loading, setLoading] = useState(true);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [acceptedEssayId, setAcceptedEssayId] = useState(null);
 
   useEffect(() => {
     const fetchEssays = async () => {
       try {
-        // Filter out essays without qualifications or with tutorIds
-        const availableEssays = mockEssays.filter(essay => 
-          essay.qualification && !essay.tutorId
-        );
-        setEssays(availableEssays);
+        const response = await TutorService.getAvailableEssays();
+        setEssays(response.essays);
       } catch (error) {
         console.error('Failed to fetch essays:', error);
       } finally {
@@ -47,17 +48,28 @@ const EssayPool = () => {
 
   const handleAcceptEssay = async (essayId) => {
     try {
-      // Mock API call
-      await fetch(`/api/essays/${essayId}/accept`, { method: 'POST' });
-      navigate(`/tutor/chat/${essayId}`);
+      const response = await TutorService.acceptEssay(essayId);
+      setSuccessMessage('Essay accepted successfully!');
+      setAcceptedEssayId(essayId);
+      
+      // Update the essays list to remove the accepted essay
+      setEssays(prevEssays => prevEssays.filter(essay => essay._id !== essayId));
+
+      // Clear the success message after 3 seconds
+      setTimeout(() => {
+        setSuccessMessage('');
+        setAcceptedEssayId(null);
+      }, 3000);
     } catch (error) {
       console.error('Failed to accept essay:', error);
+      // Optionally show error message
+      setSuccessMessage('Failed to accept essay. Please try again.');
     }
   };
 
   const filteredEssays = essays.filter(essay => {
     const matchesQualification = filters.qualification === 'all' || 
-      essay.qualification === filters.qualification;
+      essay.academicLevel === filters.qualification;
     const matchesSubject = filters.subject === 'all' || 
       essay.subject === filters.subject;
     const matchesSearch = essay.title?.toLowerCase()
@@ -73,6 +85,24 @@ const EssayPool = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Add success message display */}
+      {successMessage && (
+        <div className="mb-4 p-4 rounded-md bg-green-50 border border-green-200">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm font-medium text-green-800">
+                {successMessage}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
         <div className="sm:flex sm:items-center sm:justify-between">
@@ -141,20 +171,20 @@ const EssayPool = () => {
       ) : filteredEssays.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredEssays.map(essay => (
-            <div key={essay.id} className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200">
+            <div key={essay._id} className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200">
               <div className="p-6">
                 {/* Essay Header */}
                 <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="text-lg font-medium text-gray-900 line-clamp-2">
+                  <div className="flex-1 min-h-[3rem]">
+                    <h3 className="text-lg font-medium text-gray-900 line-clamp-2 h-[3rem]">
                       {essay.title}
                     </h3>
                     <p className="mt-1 text-sm text-gray-500">
                       {essay.subject}
                     </p>
                   </div>
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                    {getQualificationDisplay(essay.qualification)}
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 ml-2 flex-shrink-0">
+                    {essay.academicLevel}
                   </span>
                 </div>
 
@@ -169,19 +199,30 @@ const EssayPool = () => {
                   </div>
                   <div className="flex items-center text-sm text-gray-500">
                     <svg className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+                      <path fillRule="evenodd" d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4zm-6 3a1 1 0 112 0 1 1 0 01-2 0zm7-1a1 1 0 100 2 1 1 0 000-2z" clipRule="evenodd" />
                     </svg>
-                    Posted {new Date(essay.submittedAt).toLocaleDateString()}
+                    £{essay.price.toFixed(2)}
+                  </div>
+                  <div className="flex items-center text-sm text-gray-500">
+                    <svg className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    </svg>
+                    {essay.studentRequest}
                   </div>
                 </div>
 
                 {/* Action Button */}
                 <div className="mt-6">
                   <button
-                    onClick={() => handleAcceptEssay(essay.id)}
-                    className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                    onClick={() => handleAcceptEssay(essay._id)}
+                    disabled={essay._id === acceptedEssayId}
+                    className={`w-full inline-flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white 
+                      ${essay._id === acceptedEssayId 
+                        ? 'bg-gray-400 cursor-not-allowed' 
+                        : 'bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500'
+                      }`}
                   >
-                    Accept Essay
+                    {essay._id === acceptedEssayId ? 'Accepted' : 'Accept Essay'}
                   </button>
                 </div>
               </div>

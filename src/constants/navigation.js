@@ -39,6 +39,11 @@ export const NAVIGATION = {
         name: 'Tutor List',
         path: ROUTES.STUDENT.TUTOR_LIST,
         icon: 'user'
+      },
+      {
+        name: 'Chats',
+        path: ROUTES.STUDENT.CHATS,
+        icon: 'user'
       }
      ],
      SECONDARY: [
@@ -70,9 +75,19 @@ export const NAVIGATION = {
         icon: 'edit'
       },
       {
+        name: 'Tutoring Profile',
+        path: ROUTES.TUTOR.TUTORING_PROFILE,
+        icon: 'calendar'
+      },
+      {
         name: 'Tutoring',
         path: ROUTES.TUTOR.INTERVIEWS,
         icon: 'calendar'
+      },
+      {
+        name: 'Chats',
+        path: ROUTES.TUTOR.CHATS,
+        icon: 'user'
       }
     ],
     SECONDARY: [

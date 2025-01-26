@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { helpers } from '../../utils/helpers';
 import AuthService from '../../services/AuthService';
+import { useAuth } from '../../contexts/AuthContext';
 
 const Register = () => {
   const navigate = useNavigate();
+  const { isAuthenticated, user } = useAuth();
+
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -19,6 +22,12 @@ const Register = () => {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    if (isAuthenticated && user?.role) {
+      navigate(`/${user.role}/dashboard`);
+    }
+  }, [isAuthenticated, user, navigate]);
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
@@ -29,6 +38,27 @@ const Register = () => {
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: null }));
     }
+  };
+
+  const checkPasswordStrength = (password) => {
+    let strength = 0;
+    const checks = {
+      length: password.length >= 8,
+      hasUpper: /[A-Z]/.test(password),
+      hasLower: /[a-z]/.test(password),
+      hasNumber: /\d/.test(password),
+      hasSpecial: /[!@#$%^&*(),.?":{}|<>]/.test(password)
+    };
+
+    strength += Object.values(checks).filter(Boolean).length;
+
+    return {
+      score: strength,
+      checks,
+      feedback: strength === 0 ? 'Very Weak' :
+                strength <= 2 ? 'Weak' :
+                strength <= 4 ? 'Medium' : 'Strong'
+    };
   };
 
   const validateForm = () => {
@@ -53,37 +83,43 @@ const Register = () => {
       newErrors.agreeToTerms = 'You must agree to the terms and conditions';
     }
 
+    // Add password strength validation
+    const passwordStrength = checkPasswordStrength(formData.password);
+    if (!passwordStrength.checks.length) {
+      newErrors.password = 'Password must be at least 8 characters long';
+    }
+    if (!passwordStrength.checks.hasUpper) {
+      newErrors.password = (newErrors.password || '') + '\nMust contain at least one uppercase letter';
+    }
+    if (!passwordStrength.checks.hasLower) {
+      newErrors.password = (newErrors.password || '') + '\nMust contain at least one lowercase letter';
+    }
+    if (!passwordStrength.checks.hasNumber) {
+      newErrors.password = (newErrors.password || '') + '\nMust contain at least one number';
+    }
+    if (!passwordStrength.checks.hasSpecial) {
+      newErrors.password = (newErrors.password || '') + '\nMust contain at least one special character';
+    }
+
     return newErrors;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const validationErrors = validateForm();
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
-      return;
-    }
-
     setLoading(true);
 
     try {
-      const userData = {
-        name: `${formData.firstName} ${formData.lastName}`,
-        email: formData.email,
-        password: formData.password,
-        role: formData.role,
-        phone: formData.phone
-      };
-
-      const res = await AuthService.register(userData);
+      const response = await AuthService.register(formData);
       
-
-        navigate('/verify-email', { 
-          state: { userId: res.userId, email: formData.email }
-        });
-
+      // If registration is successful, redirect to email verification
+      navigate('/verify-email', {
+        state: { 
+          email: formData.email,
+          isTutor: formData.role === 'tutor'
+        }
+      });
     } catch (error) {
-      setErrors({ submit: error.message || 'Registration failed. Please try again.' });
+      setErrors({ submit: error.message || 'Registration failed' });
     } finally {
       setLoading(false);
     }
@@ -202,7 +238,43 @@ const Register = () => {
                   errors.password ? 'border-red-300' : 'border-gray-300'
                 } focus:border-red-500 focus:ring-red-500`}
               />
-              {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password}</p>}
+              {formData.password && (
+                <div className="mt-1">
+                  <div className="text-sm">
+                    Password Strength:{' '}
+                    <span className={
+                      `font-medium ${
+                        checkPasswordStrength(formData.password).feedback === 'Strong' ? 'text-green-600' :
+                        checkPasswordStrength(formData.password).feedback === 'Medium' ? 'text-yellow-600' :
+                        'text-red-600'
+                      }`
+                    }>
+                      {checkPasswordStrength(formData.password).feedback}
+                    </span>
+                  </div>
+                  <div className="mt-1 text-xs text-gray-500">
+                    Password must contain:
+                    <ul className="list-disc list-inside">
+                      <li className={checkPasswordStrength(formData.password).checks.length ? 'text-green-600' : ''}>
+                        At least 8 characters
+                      </li>
+                      <li className={checkPasswordStrength(formData.password).checks.hasUpper ? 'text-green-600' : ''}>
+                        One uppercase letter
+                      </li>
+                      <li className={checkPasswordStrength(formData.password).checks.hasLower ? 'text-green-600' : ''}>
+                        One lowercase letter
+                      </li>
+                      <li className={checkPasswordStrength(formData.password).checks.hasNumber ? 'text-green-600' : ''}>
+                        One number
+                      </li>
+                      <li className={checkPasswordStrength(formData.password).checks.hasSpecial ? 'text-green-600' : ''}>
+                        One special character
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              )}
+              {errors.password && <p className="mt-1 text-sm text-red-600 whitespace-pre-line">{errors.password}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">Confirm Password</label>

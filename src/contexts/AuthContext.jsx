@@ -24,12 +24,19 @@ export function AuthProvider({ children }) {
   }, []);
 
   const login = (userData, token) => {
-
-    // Save token and user data to localStorage
-    localStorage.setItem('token', token);
-    localStorage.setItem('user', JSON.stringify(userData));
-    // Update user state
-    setUser(userData);
+    // If user is a tutor and hasn't completed onboarding, redirect them
+    if (userData.role === 'tutor' && !userData.onboardingCompleted) {
+      // Save token and user data to localStorage
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(userData));
+      setUser(userData);
+      // Redirect will be handled by the protected route
+    } else {
+      // Regular login flow for other users
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(userData));
+      setUser(userData);
+    }
   };
 
   const logout = () => {

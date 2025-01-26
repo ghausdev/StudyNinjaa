@@ -266,6 +266,37 @@ const StudentService = {
             throw error.response.data;
         }
     },
+
+    /**
+     * @description Fetches all chat contacts for the student
+     * @returns {Promise<object>} - Returns a promise containing the tutors array
+     * @throws {Error} - If there is an error during the fetch
+     */
+    getAllChatContacts: async () => {
+        try {
+            const response = await api.get('/student/getAllContacts');
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching chat contacts:', error);
+            throw error;
+        }
+    },
+
+    /**
+     * @description Fetches messages between student and tutor
+     * @param {string} tutorId - ID of the tutor
+     * @returns {Promise<object>} - Returns a promise containing the messages array
+     * @throws {Error} - If there is an error during the fetch
+     */
+    getMessages: async (tutorId) => {
+        try {
+            const response = await api.get(`/student/messages/${tutorId}`);
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching messages:', error);
+            throw error;
+        }
+    },
 };
 
 export default StudentService;

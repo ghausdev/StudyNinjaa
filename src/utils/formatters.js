@@ -10,20 +10,16 @@ export const formatters = {
     },
   
     formatDateTime: (date) => {
-      return new Date(date).toLocaleString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
+      return new Intl.DateTimeFormat('en-US', {
+        dateStyle: 'medium',
+        timeStyle: 'short'
+      }).format(date);
     },
   
     formatTime: (date) => {
-      return new Date(date).toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit'
-      });
+      return new Intl.DateTimeFormat('en-US', {
+        timeStyle: 'short'
+      }).format(date);
     },
   
     // Currency formatter

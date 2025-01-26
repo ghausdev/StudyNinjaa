@@ -23,13 +23,13 @@ const ProfileHeader = ({
             {user?.profilePicture ? (
               <img
                 src={user.profilePicture}
-                alt={`${user.userId.name}`}
+                alt={`${user.name}`}
                 className="h-24 w-24 rounded-full object-cover border-4 border-red-100"
               />
             ) : (
               <div className="h-24 w-24 rounded-full bg-red-100 flex items-center justify-center border-4 border-red-200">
                 <span className="text-3xl font-bold text-red-700">
-                  {getInitials(user?.userId.name)}
+                  {getInitials(user?.name)}
                 </span>
               </div>
             )}
@@ -39,9 +39,9 @@ const ProfileHeader = ({
           <div className="flex-1 text-center md:text-left w-full">
             <div>
               <h2 className="text-3xl font-bold text-gray-900 mb-2">
-                {user?.userId.name}
+                {user?.name}
               </h2>
-              <p className="text-sm text-gray-600 mb-4">{user?.userId.email}</p>
+              <p className="text-sm text-gray-600 mb-4">{user?.email}</p>
               
               {showEdit && (
                 <button

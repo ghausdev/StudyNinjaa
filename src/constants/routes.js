@@ -21,7 +21,8 @@ export const ROUTES = {
       ESSAYS: '/student/essays',
       INTERVIEWS: '/student/interviews',
       PROFILE: '/student/profile',
-      TUTOR_LIST: '/student/tutor-list'
+      TUTOR_LIST: '/student/tutor-list',
+      CHATS: '/student/chats'
     },
   
     // Tutor Routes
@@ -31,7 +32,9 @@ export const ROUTES = {
       INTERVIEWS: '/tutor/interviews',
       PROFILE: '/tutor/profile',
       ESSAY_POOL: '/tutor/essay-pool',
-      CHAT: '/tutor/chat/:essayId'
+      CHAT: '/tutor/chat/:essayId',
+      TUTORING_PROFILE: '/tutor/tutoring-profile',
+      CHATS: '/tutor/chats'
     },
   
     // Admin Routes

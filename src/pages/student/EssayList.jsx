@@ -59,6 +59,15 @@ const EssayList = () => {
     };
 
 
+    const validateEssay = (essay) => {
+        const defaultDate = new Date().toISOString();
+        return {
+            ...essay,
+            createdAt: essay.createdAt || defaultDate,
+            updatedAt: essay.updatedAt || defaultDate
+        };
+    };
+
     const filteredEssays = essays
         .filter(essay => {
             const matchesStatus = statusFilter === 'all' || essay.status === statusFilter;
@@ -70,12 +79,12 @@ const EssayList = () => {
         .sort((a, b) => {
             switch (sortBy) {
                 case 'title':
-                    return a.title?.localeCompare(b.title);
+                    return (a.title || '').localeCompare(b.title || '');
                 case 'subject':
-                    return a.subject?.localeCompare(b.subject);
+                    return (a.subject || '').localeCompare(b.subject || '');
                 case 'date':
                 default:
-                    return new Date(b.createdAt) - new Date(a.createdAt);
+                    return b.createdAt.localeCompare(a.createdAt);
             }
         });
 
@@ -183,7 +192,7 @@ const EssayList = () => {
                     filteredEssays.map((essay) => (
                         <EssayCard
                             key={essay._id}
-                            essay={essay}
+                            essay={validateEssay(essay)}
                             onViewPdf={() => handleViewPdf(essay.fileUrl)}
                         />
                     ))

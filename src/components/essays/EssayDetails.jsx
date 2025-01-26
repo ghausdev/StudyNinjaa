@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import StudentService from '../../services/studentService';
 import Loading from '../../components/common/LoadingSpinner';
-import { formatters } from '../../utils/formatters';
+import { helpers } from '../../utils/helpers';
 
 const EssayDetails = () => {
     const { essayId } = useParams();
@@ -27,26 +27,22 @@ const EssayDetails = () => {
         fetchEssay();
     }, [essayId]);
 
-
     const openLinkInNewTab = (url) => {
         if(url){
             window.open(url, '_blank');
         }
     };
 
-
     const downloadFile = (url, fileName) => {
          if (url) {
             const link = document.createElement('a');
             link.href = url;
-           link.download = fileName;
+            link.download = fileName;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
          }
     };
-
-
 
     if (loading) {
         return <Loading />;
@@ -73,13 +69,12 @@ const EssayDetails = () => {
             </div>
 
             <div className="mb-4">
-                <p className="text-gray-700 font-medium">Status: <span className={`font-normal ${essay.status === 'Completed' ? 'text-green-500' : 'text-yellow-600'}`}>{formatters.formatEssayStatus(essay.status)}</span></p>
-                <p className="text-gray-700 font-medium">Submitted: <span className="font-normal">{formatters.formatDateTime(essay.createdAt)}</span></p>
-                  {essay.status === 'Completed' && (
-                      <p className="text-gray-700 font-medium">Reviewed Date: <span className="font-normal">{formatters.formatDateTime(essay.updatedAt)}</span></p>
-                  )}
+                <p className="text-gray-700 font-medium">Status: <span className={`font-normal ${essay.status === 'Completed' ? 'text-green-500' : 'text-yellow-600'}`}>{helpers.capitalizeWords(essay.status)}</span></p>
+                <p className="text-gray-700 font-medium">Submitted: <span className="font-normal">{helpers.formatDateTime(essay.createdAt)}</span></p>
+                {essay.status === 'Completed' && (
+                    <p className="text-gray-700 font-medium">Reviewed Date: <span className="font-normal">{helpers.formatDateTime(essay.updatedAt)}</span></p>
+                )}
             </div>
-
 
             <div className="mb-4">
                 <p className="text-gray-700 font-medium">Student Request:</p>
@@ -95,79 +90,70 @@ const EssayDetails = () => {
                 <p className="text-gray-700 font-medium">Academic Level:</p>
                 <p className="text-gray-700">{essay.academicLevel}</p>
             </div>
-           {essay.status === 'Completed' && (
+            {essay.status === 'Completed' && (
                 <div className="mb-4">
-                {essay.feedback && (
-                <div className="bg-red-50 p-4 rounded-lg">
-                    <p className="text-gray-700 font-medium mb-2">Feedback:</p>
-                    <div className="text-gray-700 whitespace-pre-line">{essay.feedback}</div>
-                    <div className="flex items-center mt-2">
-                        <p className="text-gray-700 font-medium mr-2">Score: </p>
-                        <p className="text-gray-700 font-medium">{essay.score}/10</p>
-                    </div>
+                    {essay.feedback && (
+                        <div className="bg-red-50 p-4 rounded-lg">
+                            <p className="text-gray-700 font-medium mb-2">Feedback:</p>
+                            <div className="text-gray-700 whitespace-pre-line">{essay.feedback}</div>
+                            <div className="flex items-center mt-2">
+                                <p className="text-gray-700 font-medium mr-2">Score: </p>
+                                <p className="text-gray-700 font-medium">{essay.score}/10</p>
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
-            </div>
-            )}
 
-            <div className="mt-4 flex flex-col  space-y-2">
+            <div className="mt-4 flex flex-col space-y-2">
                 {essay.fileUrl && (
-                   <div className='flex justify-end space-x-2'>
-                      <button
-                          onClick={() => openLinkInNewTab(essay.fileUrl)}
-                           className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-                      >
-                        View Essay File
-                     </button>
-                      <button
+                    <div className='flex justify-end space-x-2'>
+                        <button
+                            onClick={() => openLinkInNewTab(essay.fileUrl)}
+                            className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                        >
+                            View Essay File
+                        </button>
+                        <button
                             onClick={() => downloadFile(essay.fileUrl, `${essay.title.replace(/ /g, '_') || 'essay'}.pdf`)}
                             className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-                         >
-                             Download Essay File
-                         </button>
-                   </div>
-
-
-                 )}
+                        >
+                            Download Essay File
+                        </button>
+                    </div>
+                )}
                 {essay.markingScheme && (
-                    <div  className='flex justify-end space-x-2'>
+                    <div className='flex justify-end space-x-2'>
                         <button
                             onClick={() => openLinkInNewTab(essay.markingScheme)}
                             className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
                         >
-                          View Marking Scheme File
+                            View Marking Scheme File
                         </button>
                         <button
                             onClick={() => downloadFile(essay.markingScheme, 'marking_scheme.pdf')}
                             className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
                         >
-                           Download Marking Scheme File
-                         </button>
+                            Download Marking Scheme File
+                        </button>
                     </div>
-                 )}
-                 {
-                    essay.modelURL && (
-                        <div className='flex justify-end space-x-2'>
-                            <button
-                                onClick={() => openLinkInNewTab(essay.modelURL)}
-                                className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-                            >
-                              View Model File
-                            </button>
-                            <button
-                                onClick={() => downloadFile(essay.modelURL, 'model.pdf')}
-                                className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-                            >
-                               Download Model File
-                            </button>
-                        </div>
-                       
-
-                    
-                    )
-                 }
-
-
+                )}
+                {essay.modelURL && (
+                    <div className='flex justify-end space-x-2'>
+                        <button
+                            onClick={() => openLinkInNewTab(essay.modelURL)}
+                            className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                        >
+                            View Model File
+                        </button>
+                        <button
+                            onClick={() => downloadFile(essay.modelURL, 'model.pdf')}
+                            className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                        >
+                            Download Model File
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     );
