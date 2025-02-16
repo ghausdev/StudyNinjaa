@@ -1,13 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import AuthService from '../../services/AuthService';
-import { useAuth } from '../../contexts/AuthContext';
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import AuthService from "../../services/AuthService";
+import { useAuth } from "../../contexts/AuthContext";
 
 const Login = () => {
   const navigate = useNavigate();
   const { login, isAuthenticated, user } = useAuth();
-  const [step, setStep] = useState('login');
-  const [formData, setFormData] = useState({ email: '', password: '', verificationCode: '' });
+  const [step, setStep] = useState("login");
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+    verificationCode: "",
+  });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [timer, setTimer] = useState(0);
@@ -17,8 +21,8 @@ const Login = () => {
   useEffect(() => {
     if (isAuthenticated && user) {
       // Check if user is a tutor who hasn't completed onboarding
-      if (user.role === 'tutor' && !user.onboardingCompleted) {
-        navigate('/tutor-onboarding');
+      if (user.role === "tutor" && !user.onboardingCompleted) {
+        navigate("/tutor-onboarding");
       } else {
         navigate(`/${user.role}/dashboard`);
       }
@@ -27,7 +31,7 @@ const Login = () => {
 
   // Timer for resend code
   useEffect(() => {
-    const storedExpiry = localStorage.getItem('2faResendExpiry');
+    const storedExpiry = localStorage.getItem("2faResendExpiry");
     if (storedExpiry) {
       const remaining = Math.round((storedExpiry - Date.now()) / 1000);
       if (remaining > 0) setTimer(remaining);
@@ -40,7 +44,7 @@ const Login = () => {
       interval = setInterval(() => {
         setTimer((prev) => {
           if (prev <= 1) {
-            localStorage.removeItem('2faResendExpiry');
+            localStorage.removeItem("2faResendExpiry");
             return 0;
           }
           return prev - 1;
@@ -56,17 +60,20 @@ const Login = () => {
     setErrors({});
 
     if (!formData.email || !formData.password) {
-      setErrors({ submit: 'Please fill in all fields' });
+      setErrors({ submit: "Please fill in all fields" });
       return;
     }
 
     setLoading(true);
     try {
-      const response = await AuthService.login(formData.email, formData.password);
+      const response = await AuthService.login(
+        formData.email,
+        formData.password
+      );
       setUserId(response.userId);
-      setStep('2fa');
+      setStep("2fa");
     } catch (error) {
-      setErrors({ submit: error.message || 'Login failed' });
+      setErrors({ submit: error.message || "Login failed" });
     } finally {
       setLoading(false);
     }
@@ -76,26 +83,32 @@ const Login = () => {
   const handle2FASubmit = async (e) => {
     e.preventDefault();
     if (!formData.verificationCode) {
-      setErrors({ verificationCode: 'Verification code is required' });
+      setErrors({ verificationCode: "Verification code is required" });
       return;
     }
 
     setLoading(true);
     try {
-      const response = await AuthService.verify2FA(userId, formData.verificationCode);
-      
+      const response = await AuthService.verify2FA(
+        userId,
+        formData.verificationCode
+      );
+
       // First update the auth context
       login(response.user, response.token);
 
       // Then handle navigation based on user type and onboarding status
-      if (response.user.role === 'tutor' && !response.user.onboardingCompleted) {
-        console.log('Redirecting to tutor onboarding...');
-        navigate('/tutor-onboarding', { replace: true });
+      if (
+        response.user.role === "tutor" &&
+        !response.user.onboardingCompleted
+      ) {
+        console.log("Redirecting to tutor onboarding...");
+        navigate("/tutor-onboarding", { replace: true });
       } else {
         navigate(`/${response.user.role}/dashboard`, { replace: true });
       }
     } catch (error) {
-      setErrors({ submit: error.message || 'Verification failed' });
+      setErrors({ submit: error.message || "Verification failed" });
     } finally {
       setLoading(false);
     }
@@ -106,18 +119,26 @@ const Login = () => {
     try {
       await AuthService.resend2FACode(formData.email);
       const expiry = Date.now() + 60000;
-      localStorage.setItem('2faResendExpiry', expiry);
+      localStorage.setItem("2faResendExpiry", expiry);
       setTimer(60);
     } catch (error) {
-      setErrors({ submit: error.message || 'Failed to resend code' });
+      setErrors({ submit: error.message || "Failed to resend code" });
     }
   };
 
   return (
     <div className="w-full max-w-md">
-      {step === '2fa' ? (
+      <div className="text-center">
+        <Link to="/" className="inline-block">
+          <h1 className="text-4xl font-bold text-red-600 mb-6">StudyNINJAA</h1>
+        </Link>
+      </div>
+
+      {step === "2fa" ? (
         <div className="text-center">
-          <h2 className="mt-6 text-3xl font-bold text-gray-900">Two-Factor Authentication</h2>
+          <h2 className="mt-6 text-3xl font-bold text-gray-900">
+            Two-Factor Authentication
+          </h2>
           <p className="mt-2 text-sm text-gray-600">
             Please enter the verification code sent to your email
           </p>
@@ -129,7 +150,9 @@ const Login = () => {
               <input
                 name="verificationCode"
                 value={formData.verificationCode}
-                onChange={(e) => setFormData({ ...formData, verificationCode: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, verificationCode: e.target.value })
+                }
                 className="mt-1 block w-full rounded-md shadow-sm border-gray-300 focus:border-red-500 focus:ring-red-500 text-center text-xl"
                 placeholder="000000"
                 maxLength="6"
@@ -148,7 +171,14 @@ const Login = () => {
                     fill="none"
                     viewBox="0 0 24 24"
                   >
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
                     <path
                       className="opacity-75"
                       fill="currentColor"
@@ -158,7 +188,7 @@ const Login = () => {
                   Verifying...
                 </>
               ) : (
-                'Verify Code'
+                "Verify Code"
               )}
             </button>
             <div className="text-sm text-center">
@@ -168,17 +198,22 @@ const Login = () => {
                 disabled={timer > 0}
                 className="text-red-600 hover:text-red-700 disabled:text-gray-400"
               >
-                {timer > 0 ? `Resend code in ${timer}s` : 'Resend Code'}
+                {timer > 0 ? `Resend code in ${timer}s` : "Resend Code"}
               </button>
             </div>
           </form>
         </div>
       ) : (
         <div className="text-center">
-          <h2 className="mt-6 text-3xl font-bold text-gray-900">Welcome Back</h2>
+          <h2 className="mt-6 text-3xl font-bold text-gray-900">
+            Welcome Back
+          </h2>
           <p className="mt-2 text-sm text-gray-600">
-            New to StudyNINJAA?{' '}
-            <Link to="/register" className="font-medium text-red-600 hover:text-red-500">
+            New to StudyNINJAA?{" "}
+            <Link
+              to="/register"
+              className="font-medium text-red-600 hover:text-red-500"
+            >
               Sign up
             </Link>
           </p>
@@ -192,24 +227,32 @@ const Login = () => {
 
             <div className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Email address</label>
+                <label className="block text-sm font-medium text-gray-700">
+                  Email address
+                </label>
                 <input
                   name="email"
                   type="email"
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
                   className="mt-1 block w-full rounded-md shadow-sm border-gray-300 focus:border-red-500 focus:ring-red-500"
                   placeholder="Enter your email"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">Password</label>
+                <label className="block text-sm font-medium text-gray-700">
+                  Password
+                </label>
                 <input
                   name="password"
                   type="password"
                   value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, password: e.target.value })
+                  }
                   className="mt-1 block w-full rounded-md shadow-sm border-gray-300 focus:border-red-500 focus:ring-red-500"
                   placeholder="Enter your password"
                 />
@@ -223,13 +266,19 @@ const Login = () => {
                     type="checkbox"
                     className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
                   />
-                  <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
+                  <label
+                    htmlFor="remember-me"
+                    className="ml-2 block text-sm text-gray-900"
+                  >
                     Remember me
                   </label>
                 </div>
 
                 <div className="text-sm">
-                  <Link to="/forgot-password" className="font-medium text-red-600 hover:text-red-500">
+                  <Link
+                    to="/forgot-password"
+                    className="font-medium text-red-600 hover:text-red-500"
+                  >
                     Forgot password?
                   </Link>
                 </div>
@@ -248,7 +297,14 @@ const Login = () => {
                       fill="none"
                       viewBox="0 0 24 24"
                     >
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
                       <path
                         className="opacity-75"
                         fill="currentColor"
@@ -258,7 +314,7 @@ const Login = () => {
                     Signing In...
                   </>
                 ) : (
-                  'Sign In'
+                  "Sign In"
                 )}
               </button>
             </div>

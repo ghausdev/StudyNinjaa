@@ -1,17 +1,19 @@
 // src/TutorOnboarding.jsx
 
-import React, { useState } from 'react';
-import ProgressBar from './ProgressBar';
-import MotivationSection from './Step1/MotivationSection';
-import SubjectsSection from './Step1/SubjectsSection';
-import RightToWorkSection from './Step2/RightToWorkSection';
-import DBSCheckSection from './Step2/DBSCheckSection';
-import DBSApplication from './Step2/DBSApplication';
-import NavigationButtons from './NavigationButtons';
-import { fileToBase64 } from './utils/fileUtils';
-import AuthService from '../../../services/AuthService';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../../contexts/AuthContext';
+import React, { useState } from "react";
+import ProgressBar from "./ProgressBar";
+import MotivationSection from "./Step1/MotivationSection";
+import SubjectsSection from "./Step1/SubjectsSection";
+import RightToWorkSection from "./Step2/RightToWorkSection";
+import DBSCheckSection from "./Step2/DBSCheckSection";
+import DBSApplication from "./Step2/DBSApplication";
+import NavigationButtons from "./NavigationButtons";
+import { fileToBase64 } from "./utils/fileUtils";
+import AuthService from "../../../services/AuthService";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../../contexts/AuthContext";
+import ProfilePictureSection from "./Step1/ProfilePictureSection";
+import EducationSection from "./Step1/EducationSection";
 
 // Note: Ensure all components are correctly imported based on your file structure
 
@@ -22,35 +24,43 @@ const TutorOnboarding = () => {
 
   // All fields initialized to avoid "uncontrolled input" warnings
   const [formData, setFormData] = useState({
-    motivation: '',
+    motivation: "",
     subjects: [
       {
-        name: '',
-        levels: []
-      }
+        name: "",
+        levels: [],
+      },
     ],
     rightToWork: {
-      hasRight: null,  // true => yes, false => no, null => not chosen
-      nationality: '',
-      documentType: '',
+      hasRight: null, // true => yes, false => no, null => not chosen
+      nationality: "",
+      documentType: "",
       documentFile: null,
-      niNumber: '',
-      shareCode: '',
-      dateOfBirth: ''
+      niNumber: "",
+      shareCode: "",
+      dateOfBirth: "",
     },
     dbsCheck: {
       hasDBS: null,
       certificateFile: null,
-      fullNameDBS: '',
-      certificateNumber: '',
+      fullNameDBS: "",
+      certificateNumber: "",
       startApplication: false,
       applicationDetails: {
-        email: '',
-        fullName: '',
-        phoneNumber: '',
-        agreementAccepted: false
-      }
-    }
+        email: "",
+        fullName: "",
+        phoneNumber: "",
+        agreementAccepted: false,
+      },
+    },
+    profilePicture: null,
+    university: "",
+    course: "",
+    aLevels: [{ subject: "", grade: "" }],
+    aLevelsCompletionDate: "",
+    universityStartDate: "",
+    expectedGraduationDate: "",
+    dateOfBirth: "",
   });
 
   const [errors, setErrors] = useState({});
@@ -58,51 +68,59 @@ const TutorOnboarding = () => {
 
   // Backend enum values for nationality
   const nationalityOptions = [
-    { value: 'BritishIrish', label: 'British or Irish Citizen' },
-    { value: 'EuEeaSwiss', label: 'EU, EEA, or Swiss Citizen' },
-    { value: 'NonEuEea', label: 'Non-EU, EEA Citizen' }
+    { value: "BritishIrish", label: "British or Irish Citizen" },
+    { value: "EuEeaSwiss", label: "EU, EEA, or Swiss Citizen" },
+    { value: "NonEuEea", label: "Non-EU, EEA Citizen" },
   ];
 
   // Possible qualification levels
-  const qualificationLevels = ['GCSE', 'A-Level', 'Bachelor', 'Masters', 'PhD'];
+  const qualificationLevels = ["GCSE", "A-Level", "Bachelor", "Masters", "PhD"];
 
   // Frontend mapping for document types
   const documentTypes = {
-    'BritishIrish': [
-      { value: 'passport', label: 'Passport (Expired Accepted)' },
-      { value: 'birth-cert', label: 'UK Birth Certificate' },
-      { value: 'adoption-cert', label: 'UK Adoption Certificate' }
+    BritishIrish: [
+      { value: "passport", label: "Passport (Expired Accepted)" },
+      { value: "birth-cert", label: "UK Birth Certificate" },
+      { value: "adoption-cert", label: "UK Adoption Certificate" },
     ],
-    'EuEeaSwiss': [
-      { value: 'passport', label: 'Passport (Must be in date)' }
+    EuEeaSwiss: [{ value: "passport", label: "Passport (Must be in date)" }],
+    NonEuEea: [
+      { value: "brp", label: "Biometric Residence Permit (BRP)" },
+      { value: "visa", label: "Valid Visa Document" },
     ],
-    'NonEuEea': [
-      { value: 'brp', label: 'Biometric Residence Permit (BRP)' },
-      { value: 'visa', label: 'Valid Visa Document' }
-    ]
   };
 
   // Handle ALL changes (no console logs here to avoid real-time data output)
   const handleChange = (e) => {
-    const { name, value, type, checked, files } = e.target;
-    if (name.includes('.')) {
-      const [parent, child] = name.split('.');
+    const { name, value, type, files } = e.target;
+
+    // Special handling for file inputs
+    if (type === "file") {
+      if (name === "profilePicture") {
+        setFormData((prev) => ({
+          ...prev,
+          profilePicture: files[0], // Store the actual file object
+        }));
+      } else {
+        // Handle other file inputs...
+      }
+      return;
+    }
+
+    // Handle other input types...
+    if (name.includes(".")) {
+      const [parent, child] = name.split(".");
       setFormData((prev) => ({
         ...prev,
         [parent]: {
           ...prev[parent],
-          [child]:
-            type === 'checkbox'
-              ? checked
-              : type === 'file'
-              ? files[0]
-              : value
-        }
+          [child]: value,
+        },
       }));
     } else {
       setFormData((prev) => ({
         ...prev,
-        [name]: type === 'checkbox' ? checked : value
+        [name]: value,
       }));
     }
 
@@ -125,8 +143,50 @@ const TutorOnboarding = () => {
   const addSubject = () => {
     setFormData((prev) => ({
       ...prev,
-      subjects: [...prev.subjects, { name: '', levels: [] }]
+      subjects: [...prev.subjects, { name: "", levels: [] }],
     }));
+  };
+
+  // Validate Step 1
+  const validateStep1 = () => {
+    const errors = {};
+
+    // Check profile picture first
+    if (!formData.profilePicture) {
+      errors.profilePicture = "Profile picture is required";
+    }
+
+    if (!formData.university) {
+      errors.university = "University name is required";
+    }
+
+    if (!formData.course) {
+      errors.course = "Course name is required";
+    }
+
+    // Validate A-Levels
+    if (!formData.aLevels.some((al) => al.subject && al.grade)) {
+      errors.aLevels = "At least one A-Level subject and grade is required";
+    }
+
+    // Validate dates
+    if (!formData.aLevelsCompletionDate) {
+      errors.aLevelsCompletionDate = "A-Levels completion date is required";
+    }
+
+    if (!formData.universityStartDate) {
+      errors.universityStartDate = "University start date is required";
+    }
+
+    if (!formData.expectedGraduationDate) {
+      errors.expectedGraduationDate = "Expected graduation date is required";
+    }
+
+    if (!formData.dateOfBirth) {
+      errors.dateOfBirth = "Date of birth is required";
+    }
+
+    return errors;
   };
 
   // Step-based validation
@@ -134,11 +194,9 @@ const TutorOnboarding = () => {
     const newErrors = {};
     switch (step) {
       case 1:
-        if (!formData.motivation || formData.motivation.length > 250) {
-          newErrors.motivation = 'Please provide a motivation (max 250 characters)';
-        }
-        if (!formData.subjects.some((s) => s.name && s.levels.length > 0)) {
-          newErrors.subjects = 'Please add at least one subject with qualification levels';
+        const step1Errors = validateStep1();
+        if (Object.keys(step1Errors).length > 0) {
+          newErrors.step1 = step1Errors;
         }
         break;
 
@@ -150,26 +208,25 @@ const TutorOnboarding = () => {
 
         // DBS validation
         if (formData.dbsCheck.hasDBS === null) {
-          newErrors.dbsCheck = 'Please indicate your DBS check status';
+          newErrors.dbsCheck = "Please indicate your DBS check status";
         } else if (formData.dbsCheck.hasDBS) {
           if (!formData.dbsCheck.fullNameDBS) {
-            newErrors.dbsFullName = 'Please enter your full name as it appears on DBS';
+            newErrors.dbsFullName =
+              "Please enter your full name as it appears on DBS";
           }
           if (!formData.dbsCheck.certificateNumber) {
-            newErrors.dbsCertificateNumber = 'Please enter your DBS certificate number';
+            newErrors.dbsCertificateNumber =
+              "Please enter your DBS certificate number";
           }
           if (!formData.dbsCheck.certificateFile) {
-            newErrors.dbsCertificateFile = 'Please upload your DBS certificate';
+            newErrors.dbsCertificateFile = "Please upload your DBS certificate";
           }
         } else if (formData.dbsCheck.startApplication) {
-          const {
-            email,
-            fullName,
-            phoneNumber,
-            agreementAccepted
-          } = formData.dbsCheck.applicationDetails;
+          const { email, fullName, phoneNumber, agreementAccepted } =
+            formData.dbsCheck.applicationDetails;
           if (!email || !fullName || !phoneNumber || !agreementAccepted) {
-            newErrors.dbsApplication = 'Please complete all DBS application fields';
+            newErrors.dbsApplication =
+              "Please complete all DBS application fields";
           }
         }
         break;
@@ -183,56 +240,69 @@ const TutorOnboarding = () => {
   // Right to Work validation
   const validateRightToWork = () => {
     const errors = {};
-    const { hasRight, nationality, documentType, documentFile, niNumber, shareCode, dateOfBirth } =
-      formData.rightToWork;
+    const {
+      hasRight,
+      nationality,
+      documentType,
+      documentFile,
+      niNumber,
+      shareCode,
+      dateOfBirth,
+    } = formData.rightToWork;
 
     if (hasRight === null) {
-      errors.hasRight = 'Please indicate your right to work status';
+      errors.hasRight = "Please indicate your right to work status";
       return errors;
     }
 
     if (hasRight === true) {
       if (!nationality) {
-        errors.nationality = 'Please select your nationality';
+        errors.nationality = "Please select your nationality";
         return errors;
       }
 
       // British or Irish
-      if (nationality === 'BritishIrish') {
+      if (nationality === "BritishIrish") {
         if (!documentType) {
-          errors.documentType = 'Please select a document type (Passport/Birth Cert/Adoption Cert)';
+          errors.documentType =
+            "Please select a document type (Passport/Birth Cert/Adoption Cert)";
         }
-        if (['birth-cert', 'adoption-cert'].includes(documentType) && !niNumber) {
-          errors.niNumber = 'NI Number is required when uploading a birth or adoption certificate';
+        if (
+          ["birth-cert", "adoption-cert"].includes(documentType) &&
+          !niNumber
+        ) {
+          errors.niNumber =
+            "NI Number is required when uploading a birth or adoption certificate";
         }
         if (!documentFile) {
-          errors.documentFile = 'Please upload the required document';
+          errors.documentFile = "Please upload the required document";
         }
       }
 
       // EU/EEA/Swiss
-      else if (nationality === 'EuEeaSwiss') {
+      else if (nationality === "EuEeaSwiss") {
         if (!shareCode) {
-          errors.shareCode = 'Please enter your Share Code';
+          errors.shareCode = "Please enter your Share Code";
         }
         if (!dateOfBirth) {
-          errors.dateOfBirth = 'Please enter your Date of Birth';
+          errors.dateOfBirth = "Please enter your Date of Birth";
         }
         if (!documentType) {
-          errors.documentType = 'Please select passport (in-date) for EU/EEA/Swiss';
+          errors.documentType =
+            "Please select passport (in-date) for EU/EEA/Swiss";
         }
         if (!documentFile) {
-          errors.documentFile = 'Please upload your passport';
+          errors.documentFile = "Please upload your passport";
         }
       }
 
       // Non-EU/EEA
-      else if (nationality === 'NonEuEea') {
+      else if (nationality === "NonEuEea") {
         if (!documentType) {
-          errors.documentType = 'Please select BRP or Visa Document';
+          errors.documentType = "Please select BRP or Visa Document";
         }
         if (!documentFile) {
-          errors.documentFile = 'Please upload your BRP or Visa document';
+          errors.documentFile = "Please upload your BRP or Visa document";
         }
       }
     }
@@ -250,27 +320,35 @@ const TutorOnboarding = () => {
     }
   };
 
-  // Final submit handler: 
+  // Final submit handler:
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    
+    setErrors({});
+
     try {
+      // Final validation before submission
+      if (!formData.profilePicture) {
+        throw new Error("Profile picture is required");
+      }
+
       const response = await AuthService.submitTutorOnboarding(formData);
-      
+
       // Update the user object with onboardingCompleted flag
       const updatedUser = {
         ...user,
-        onboardingCompleted: true
+        onboardingCompleted: true,
       };
-      
+
       // Update local storage and context
-      login(updatedUser, localStorage.getItem('token'));
-      
+      login(updatedUser, localStorage.getItem("token"));
+
       // Redirect to tutor dashboard
-      navigate('/tutor/dashboard');
+      navigate("/tutor/dashboard");
     } catch (error) {
-      setErrors({ submit: error.message || 'Submission failed. Please try again.' });
+      setErrors({
+        submit: error.message || "Submission failed. Please try again.",
+      });
     } finally {
       setLoading(false);
     }
@@ -284,7 +362,8 @@ const TutorOnboarding = () => {
         <div className="space-y-4">
           <div>
             <label className="text-gray-700 text-sm font-semibold block">
-              Full Name (as it appears on DBS) <span className="text-red-500">*</span>
+              Full Name (as it appears on DBS){" "}
+              <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -343,7 +422,7 @@ const TutorOnboarding = () => {
                 onClick={() =>
                   setFormData((prev) => ({
                     ...prev,
-                    dbsCheck: { ...prev.dbsCheck, startApplication: true }
+                    dbsCheck: { ...prev.dbsCheck, startApplication: true },
                   }))
                 }
                 className="w-full inline-flex justify-center items-center px-6 py-3 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-red-600 hover:bg-red-700"
@@ -355,7 +434,7 @@ const TutorOnboarding = () => {
                 onClick={() =>
                   setFormData((prev) => ({
                     ...prev,
-                    dbsCheck: { ...prev.dbsCheck, startApplication: false }
+                    dbsCheck: { ...prev.dbsCheck, startApplication: false },
                   }))
                 }
                 className="w-full inline-flex justify-center items-center px-6 py-3 border border-gray-300 text-sm font-medium rounded-lg shadow-sm text-gray-700 bg-white hover:bg-gray-50"
@@ -386,7 +465,9 @@ const TutorOnboarding = () => {
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             Complete Your Tutor Profile
           </h1>
-          <p className="text-gray-600">Join our community of expert educators</p>
+          <p className="text-gray-600">
+            Join our community of expert educators
+          </p>
         </div>
 
         {/* Progress Bar */}
@@ -398,14 +479,20 @@ const TutorOnboarding = () => {
             {/* STEP 1: Motivation + Subjects */}
             {currentStep === 1 && (
               <div className="space-y-8">
-                {/* Motivation */}
+                <ProfilePictureSection
+                  handleChange={handleChange}
+                  errors={errors}
+                />
+                <EducationSection
+                  education={formData}
+                  handleChange={handleChange}
+                  errors={errors}
+                />
                 <MotivationSection
                   motivation={formData.motivation}
                   handleChange={handleChange}
                   errors={errors}
                 />
-
-                {/* Subjects */}
                 <SubjectsSection
                   subjects={formData.subjects}
                   qualificationLevels={qualificationLevels}

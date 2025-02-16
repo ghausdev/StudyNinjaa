@@ -99,21 +99,50 @@ const AuthService = {
   // Submit tutor onboarding information
   submitTutorOnboarding: async (formData) => {
     try {
-      // Create a new FormData instance to handle file uploads
       const data = new FormData();
 
-      // Add basic information
-      data.append('yearsOfExperience', formData.yearsOfExperience);
+      // Profile Picture (mandatory) - Add this first and check it exists
+      if (!formData.profilePicture) {
+        throw new Error('Profile picture is required');
+      }
+      data.append('profilePicture', formData.profilePicture);
+
+      // Basic information
       data.append('university', formData.university);
-      data.append('motivation', formData.motivation);
+      data.append('course', formData.course);
+      data.append('aLevels', JSON.stringify(formData.aLevels));
+      data.append('aLevelsCompletionDate', formData.aLevelsCompletionDate);
+      data.append('universityStartDate', formData.universityStartDate);
+      data.append('expectedGraduationDate', formData.expectedGraduationDate);
+      data.append('dateOfBirth', formData.dateOfBirth);
       data.append('subjects', JSON.stringify(formData.subjects));
-      data.append('StudyLevel', formData.StudyLevel);
+
+      // University Documents
+      if (formData.universityDocuments && formData.universityDocuments.length > 0) {
+        formData.universityDocuments.forEach((doc) => {
+          data.append('universityDocuments', doc);
+        });
+      }
+
+      // Education Documents
+      if (formData.universityDocument) {
+        data.append('universityDocument', formData.universityDocument);
+      }
+
+      if (formData.aLevelsCertificate) {
+        data.append('aLevelsCertificate', formData.aLevelsCertificate);
+      }
+
+      // GCSE Certificates for relevant subjects
+      if (formData.gcseDocuments && formData.gcseDocuments.length > 0) {
+        formData.gcseDocuments.forEach((doc) => {
+          data.append('gcseDocuments', doc);
+        });
+      }
+
+      // Right to Work
       data.append('rightToWork', formData.rightToWork.hasRight);
       data.append('eligibility', formData.rightToWork.nationality);
-      data.append('hasDBS', formData.dbsCheck.hasDBS);
-      data.append('appliedForDBS', formData.dbsCheck.startApplication);
-
-      // Handle Right to Work documents based on nationality
       if (formData.rightToWork.nationality === 'british-irish') {
         if (formData.rightToWork.documentType === 'passport') {
           data.append('passportURL', formData.rightToWork.documentFile);
@@ -135,7 +164,9 @@ const AuthService = {
         }
       }
 
-      // Handle DBS Check information
+      // DBS Check
+      data.append('hasDBS', formData.dbsCheck.hasDBS);
+      data.append('appliedForDBS', formData.dbsCheck.startApplication);
       if (formData.dbsCheck.hasDBS) {
         data.append('fullNameDBS', formData.dbsCheck.fullNameDBS);
         data.append('certificateNumber', formData.dbsCheck.certificateNumber);
@@ -150,24 +181,27 @@ const AuthService = {
         }));
       }
 
-      // Handle university documents if present
-      if (formData.universityDocuments && formData.universityDocuments.length > 0) {
-        formData.universityDocuments.forEach((doc, index) => {
-          data.append('universityDocuments', doc);
-        });
-      }
-
-      // Handle profile picture if present
-      if (formData.profilePicture) {
-        data.append('profilePicture', formData.profilePicture);
-      }
-
       const response = await api.post('/tutor/update-info', data, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
 
+      return response.data;
+    } catch (error) {
+      // Improve error handling
+      if (error.message === 'Profile picture is required') {
+        throw { message: 'Profile picture is required' };
+      }
+      throw error.response?.data || error;
+    }
+  },
+
+  // Add this new method
+  checkProfiles: async () => {
+    try {
+      const response = await api.get('/auth/checkProfiles');
+      console.log(response.data);
       return response.data;
     } catch (error) {
       throw error.response?.data || error;

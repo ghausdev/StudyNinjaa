@@ -5,7 +5,6 @@ export const NAVIGATION = {
    // Public Navigation
    PUBLIC: [
      { name: 'Home', path: ROUTES.HOME },
-     { name: 'About', path: ROUTES.ABOUT },
      { name: 'Contact', path: ROUTES.CONTACT },
 
      { name: 'Terms', path: ROUTES.TERMS },
