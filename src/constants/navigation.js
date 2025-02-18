@@ -107,7 +107,7 @@ export const NAVIGATION = {
         icon: 'dashboard'
       },
       {
-        name: 'User Management',
+        name: 'Tutor Management',
         path: ROUTES.ADMIN.USERS,
         icon: 'user'
       },
@@ -116,11 +116,7 @@ export const NAVIGATION = {
         path: ROUTES.ADMIN.TRANSACTIONS,
         icon: 'edit'
       },
-      {
-        name: 'Content',
-        path: ROUTES.ADMIN.CONTENT,
-        icon: 'document'
-      }
+  
     ]
   }
 };

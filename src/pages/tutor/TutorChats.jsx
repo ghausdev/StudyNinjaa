@@ -1,123 +1,139 @@
-import React, { useState, useEffect, useRef } from "react"
-import { Link } from "react-router-dom"
-import TutorService from "../../services/tutorService"
-import { io } from "socket.io-client"
-import { useAuth } from "../../contexts/AuthContext"
+import React, { useState, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
+import TutorService from "../../services/tutorService";
+import { io } from "socket.io-client";
+import { useAuth } from "../../contexts/AuthContext";
 
 const TutorChats = () => {
-  const { user } = useAuth()
-  const [chats, setChats] = useState([])
-  const [selectedChat, setSelectedChat] = useState(null)
-  const [newMessage, setNewMessage] = useState("")
-  const [messages, setMessages] = useState([])
-  const [socket, setSocket] = useState(null)
-  const messagesEndRef = useRef(null)
-  const chatListRef = useRef(null)
-  const messagesAreaRef = useRef(null)
+  const { user } = useAuth();
+  const [chats, setChats] = useState([]);
+  const [selectedChat, setSelectedChat] = useState(null);
+  const [newMessage, setNewMessage] = useState("");
+  const [messages, setMessages] = useState([]);
+  const [socket, setSocket] = useState(null);
+  const messagesEndRef = useRef(null);
+  const chatListRef = useRef(null);
+  const messagesAreaRef = useRef(null);
 
   useEffect(() => {
-    const newSocket = io("https://studyninja-backend.onrender.com/", {
+    const newSocket = io("http://localhost:9001/", {
       auth: {
         token: localStorage.getItem("token"),
       },
-    })
-    setSocket(newSocket)
-    loadChats()
+    });
+    setSocket(newSocket);
+    loadChats();
 
-    return () => newSocket.disconnect()
-  }, [])
+    // Move socket event handlers here
+    if (user?._id) {
+      newSocket.emit("join", user._id);
+    }
 
-  useEffect(() => {
-    if (!socket || !user) return
-
-    socket.emit("join", user._id)
-
-    socket.on("receiveMessage", (message) => {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: message._id,
-          sender: message.sender,
-          content: message.content,
-          timestamp: new Date(message.timestamp),
-        },
-      ])
-    })
+    newSocket.on("receiveMessage", (message) => {
+      console.log("Received message:", message);
+      if (
+        selectedChat?.id === message.sender ||
+        selectedChat?.id === message.recipient
+      ) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: message._id,
+            sender: message.senderModel.toLowerCase(),
+            content: message.content,
+            timestamp: new Date(message.timestamp),
+          },
+        ]);
+      }
+    });
 
     return () => {
-      socket.off("receiveMessage")
-    }
-  }, [socket, user])
+      newSocket.off("receiveMessage");
+      newSocket.disconnect();
+    };
+  }, [user, selectedChat]); // Add selectedChat as dependency
 
   useEffect(() => {
-    scrollToBottom()
-  }, [messagesEndRef]) //Corrected dependency
+    scrollToBottom();
+  }, [messagesEndRef]); //Corrected dependency
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
   const loadChats = async () => {
     try {
-      const response = await TutorService.getAllChatContacts()
-      console.log("chats", response)
+      const response = await TutorService.getAllChatContacts();
+      console.log("chats", response);
       setChats(
         response.students.map((student) => ({
           id: student._id,
           studentName: student.name,
- 
-          profilePic: student.profilePicture || `https://ui-avatars.com/api/?name=${student.name}`,
+
+          profilePic:
+            student.profilePicture ||
+            `https://ui-avatars.com/api/?name=${student.name}`,
           timestamp: new Date(),
           lastMessage: "",
           unread: 0,
-        })),
-      )
+        }))
+      );
     } catch (error) {
-      console.error("Error loading chats:", error)
+      console.error("Error loading chats:", error);
     }
-  }
+  };
 
   const loadMessages = async (studentId) => {
     try {
-      const response = await TutorService.getMessages(studentId)
+      const response = await TutorService.getMessages(studentId);
       setMessages(
         response.messages.map((msg) => ({
           id: msg._id,
-          sender: msg.sender ,
+          sender: msg.sender,
           content: msg.content,
           timestamp: new Date(msg.timestamp),
-        })),
-      )
+        }))
+      );
     } catch (error) {
-      console.error("Error loading messages:", error)
+      console.error("Error loading messages:", error);
     }
-  }
+  };
 
-  const handleSendMessage = async () => {
-    if (!newMessage.trim() || !selectedChat || !socket || !user) return
+  const handleSendMessage = () => {
+    if (!newMessage.trim() || !selectedChat || !socket) return;
 
-    try {
-      socket.emit("sendMessage", {
-        sender: user.id,
-        recipient: selectedChat.id,
-        content: newMessage.trim(),
-      })
+    console.log("Sending message:", {
+      sender: user.id,
+      recipient: selectedChat.id,
+      content: newMessage,
+    });
 
-      setNewMessage("")
-    } catch (error) {
-      console.error("Error sending message:", error)
-    }
-  }
+    socket.emit("sendMessage", {
+      sender: user.id,
+      recipient: selectedChat.id,
+      content: newMessage,
+    });
+
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: Date.now(),
+        sender: "tutor",
+        content: newMessage,
+        timestamp: new Date(),
+      },
+    ]);
+
+    setNewMessage("");
+  };
 
   const handleChatSelect = (chat) => {
-    setSelectedChat(chat)
-    loadMessages(chat.id)
-  }
+    setSelectedChat(chat);
+    loadMessages(chat.id);
+  };
 
   return (
     <div className="flex flex-col h-screen">
-
-
       <div className="flex-1 overflow-hidden">
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 h-full flex flex-col">
           <div className="grid grid-cols-12 flex-1 overflow-hidden">
@@ -146,13 +162,20 @@ const TutorChats = () => {
                           className="w-10 h-10 rounded-full"
                         />
                         <div>
-                          <h3 className="font-medium text-gray-900">{chat.studentName}</h3>
-                          <p className="text-sm text-gray-500 mt-1">{chat.essayTitle}</p>
+                          <h3 className="font-medium text-gray-900">
+                            {chat.studentName}
+                          </h3>
+                          <p className="text-sm text-gray-500 mt-1">
+                            {chat.essayTitle}
+                          </p>
                         </div>
                       </div>
                       <div className="flex flex-col items-end">
                         <span className="text-xs text-gray-500">
-                          {chat.timestamp?.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) || ""}
+                          {chat.timestamp?.toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          }) || ""}
                         </span>
                         {chat.unread > 0 && (
                           <span className="bg-red-500 text-white text-xs rounded-full px-2 py-1 mt-1">
@@ -161,7 +184,9 @@ const TutorChats = () => {
                         )}
                       </div>
                     </div>
-                    <p className="text-sm text-gray-600 mt-2 truncate">{chat.lastMessage}</p>
+                    <p className="text-sm text-gray-600 mt-2 truncate">
+                      {chat.lastMessage}
+                    </p>
                   </div>
                 ))}
               </div>
@@ -178,22 +203,40 @@ const TutorChats = () => {
                         className="w-12 h-12 rounded-full"
                       />
                       <div>
-                        <h2 className="font-medium text-gray-900">{selectedChat.studentName}</h2>
-                        <p className="text-sm text-gray-500">{selectedChat.essayTitle}</p>
+                        <h2 className="font-medium text-gray-900">
+                          {selectedChat.studentName}
+                        </h2>
+                        <p className="text-sm text-gray-500">
+                          {selectedChat.essayTitle}
+                        </p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex-1 overflow-y-auto p-4 space-y-4" ref={messagesAreaRef}>
+                  <div
+                    className="flex-1 overflow-y-auto p-4 space-y-4"
+                    ref={messagesAreaRef}
+                  >
                     {messages.map((msg) => (
-                      <div key={msg.id} className={`flex ${msg.sender === "tutor" ? "justify-end" : "justify-start"}`}>
+                      <div
+                        key={msg.id}
+                        className={`flex ${
+                          msg.sender === "tutor"
+                            ? "justify-end"
+                            : "justify-start"
+                        }`}
+                      >
                         <div
                           className={`max-w-[75%] rounded-lg p-3 ${
-                            msg.sender === "tutor" ? "bg-red-100 text-red-900" : "bg-gray-100 text-gray-900"
+                            msg.sender === "tutor"
+                              ? "bg-red-100 text-red-900"
+                              : "bg-gray-100 text-gray-900"
                           }`}
                         >
                           <p className="text-sm">{msg.content}</p>
-                          <p className="text-xs text-gray-500 mt-1">{msg.timestamp?.toLocaleTimeString() || ""}</p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            {msg.timestamp?.toLocaleTimeString() || ""}
+                          </p>
                         </div>
                       </div>
                     ))}
@@ -208,7 +251,9 @@ const TutorChats = () => {
                         onChange={(e) => setNewMessage(e.target.value)}
                         placeholder="Type a message..."
                         className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500"
-                        onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
+                        onKeyPress={(e) =>
+                          e.key === "Enter" && handleSendMessage()
+                        }
                       />
                       <button
                         onClick={handleSendMessage}
@@ -229,8 +274,7 @@ const TutorChats = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default TutorChats
-
+export default TutorChats;

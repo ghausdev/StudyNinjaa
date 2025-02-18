@@ -1,282 +1,533 @@
-// UserManagement.js
-import React, { useState } from 'react';
-import Badge from '../../components/common/Badge';
-import LoadingSpinner from '../../components/common/LoadingSpinner';
-import { formatters } from '../../utils/formatters';
-import { mockUsers } from '../../data/mockUsers';
+import React, { useState, useEffect } from "react";
+import Badge from "../../components/common/Badge";
+import LoadingSpinner from "../../components/common/LoadingSpinner";
+import adminService from "../../services/adminService";
+import { toast } from "react-toastify";
+import ConfirmationModal from "../../components/common/ConfirmationModal";
 
 const UserManagement = () => {
-  const [selectedRole, setSelectedRole] = useState('all');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('active');
+  const [tutors, setTutors] = useState([]);
   const [loading, setLoading] = useState(false);
-
-  // Combine all users and add role property
-  const users = [
-    ...mockUsers.students.map(user => ({ ...user, role: 'student' })),
-    ...mockUsers.tutors.map(user => ({ ...user, role: 'tutor' })),
-    ...mockUsers.admins.map(user => ({ ...user, role: 'admin' }))
-  ];
-
-  // Filter users based on criteria
-  const filteredUsers = users.filter(user => {
-    const matchesRole = selectedRole === 'all' || user.role === selectedRole;
-    const matchesStatus = statusFilter === 'all' || user.status === statusFilter;
-    const matchesSearch = searchQuery === '' || 
-      `${user.firstName} ${user.lastName}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesRole && matchesStatus && matchesSearch;
+  const [searchQuery, setSearchQuery] = useState("");
+  const [approvalStates, setApprovalStates] = useState({});
+  const [confirmationModal, setConfirmationModal] = useState({
+    isOpen: false,
+    tutorId: null,
   });
 
-  const handleUserStatusChange = async (userId, newStatus) => {
+  useEffect(() => {
+    fetchUnapprovedTutors();
+  }, []);
+
+  const fetchUnapprovedTutors = async () => {
     setLoading(true);
     try {
-      // Mock API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      console.log('Changed user status:', userId, newStatus);
+      const response = await adminService.getUnapprovedTutors();
+      setTutors(response.tutors);
+      // Initialize approval states
+      const initialStates = {};
+      response.tutors.forEach((tutor) => {
+        initialStates[tutor._id] = {
+          approved_essay: tutor.approved_essay || false,
+          approved_tutoring: tutor.approved_tutoring || false,
+          StudyLevel: tutor.StudyLevel || "",
+        };
+      });
+      setApprovalStates(initialStates);
+    } catch (error) {
+      toast.error("Error fetching unapproved tutors: " + error.message);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleRoleChange = async (userId, newRole) => {
+  const handleApprovalSubmit = async (tutorId) => {
+    const approvalData = approvalStates[tutorId];
+    if (!approvalData.StudyLevel) {
+      toast.error("Please select a study level");
+      return;
+    }
+
+    // Open confirmation modal
+    setConfirmationModal({
+      isOpen: true,
+      tutorId,
+    });
+  };
+
+  const handleConfirmApproval = async () => {
     setLoading(true);
     try {
-      // Mock API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      console.log('Changed user role:', userId, newRole);
+      const tutorId = confirmationModal.tutorId;
+      const approvalData = approvalStates[tutorId];
+
+      await adminService.approveTutor(tutorId, approvalData);
+
+      // Show success message
+      toast.success("Tutor approvals updated successfully", {
+        position: "top-center",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+
+      // Close modal and refresh data
+      setConfirmationModal({ isOpen: false, tutorId: null });
+      await fetchUnapprovedTutors();
+    } catch (error) {
+      toast.error("Error updating tutor approvals: " + error.message);
     } finally {
       setLoading(false);
     }
   };
+
+  const handleApprovalChange = (tutorId, field, value) => {
+    setApprovalStates((prev) => ({
+      ...prev,
+      [tutorId]: {
+        ...prev[tutorId],
+        [field]: value,
+      },
+    }));
+  };
+
+  const filteredTutors = tutors.filter(
+    (tutor) =>
+      tutor.dbsDetails?.fullName
+        ?.toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
+      tutor.university?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
-    <div className="space-y-6">
-      {/* Header with Stats */}
+    <div className="space-y-6 p-6">
+      {/* Header */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Users</h1>
-            <p className="mt-1 text-sm text-gray-500">
-              Manage users, roles and permissions
-            </p>
-          </div>
-          <button className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700">
-            Add New User
-          </button>
-        </div>
-        <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-3">
-          <div className="px-4 py-5 bg-gray-50 shadow rounded-lg overflow-hidden sm:p-6">
-            <dt className="text-sm font-medium text-gray-500 truncate">Total Users</dt>
-            <dd className="mt-1 text-3xl font-semibold text-gray-900">{users.length}</dd>
-          </div>
-          <div className="px-4 py-5 bg-gray-50 shadow rounded-lg overflow-hidden sm:p-6">
-            <dt className="text-sm font-medium text-gray-500 truncate">Active Users</dt>
-            <dd className="mt-1 text-3xl font-semibold text-gray-900">
-              {users.filter(user => user.status === 'active').length}
-            </dd>
-          </div>
-          <div className="px-4 py-5 bg-gray-50 shadow rounded-lg overflow-hidden sm:p-6">
-            <dt className="text-sm font-medium text-gray-500 truncate">New This Month</dt>
-            <dd className="mt-1 text-3xl font-semibold text-gray-900">12</dd>
-          </div>
-        </div>
+        <h1 className="text-2xl font-bold text-gray-900">
+          Tutor Approval Management
+        </h1>
+        <p className="mt-1 text-sm text-gray-500">
+          Review and approve tutors for essay writing and tutoring services
+        </p>
       </div>
 
-      {/* Filters */}
+      {/* Search */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Role</label>
-            <select
-              value={selectedRole}
-              onChange={(e) => setSelectedRole(e.target.value)}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500"
-            >
-              <option value="all">All Roles</option>
-              <option value="student">Students</option>
-              <option value="tutor">Tutors</option>
-              <option value="admin">Administrators</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Status</label>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500"
-            >
-              <option value="all">All Status</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-              <option value="suspended">Suspended</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Search</label>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search users..."
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500"
-            />
-          </div>
-        </div>
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search by name or university..."
+          className="w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500"
+        />
       </div>
 
-      {/* Users Table */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-        <div className="overflow-x-auto">
-          {loading && (
-            <div className="absolute inset-0 bg-white bg-opacity-50 flex items-center justify-center">
-              <LoadingSpinner size="lg" />
+      {/* Tutors Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {filteredTutors.map((tutor) => (
+          <div
+            key={tutor._id}
+            className="bg-white rounded-lg shadow-lg overflow-hidden"
+          >
+            {/* Header Section */}
+            <div className="p-6 bg-gray-50 border-b">
+              <div className="flex items-center space-x-4">
+                <div className="h-16 w-16 rounded-full bg-gray-200 overflow-hidden">
+                  {tutor.profilePicture ? (
+                    <img
+                      src={tutor.profilePicture}
+                      alt="Profile"
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="h-full w-full flex items-center justify-center bg-gray-300">
+                      <span className="text-gray-600">No img</span>
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900">
+                    {tutor.dbsDetails?.fullName || "Name not provided"}
+                  </h3>
+                  <p className="text-sm text-gray-500">
+                    {tutor.university || "University not specified"}
+                  </p>
+                </div>
+              </div>
             </div>
-          )}
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  User
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Role
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Last Active
-                </th>
-                <th scope="col" className="relative px-6 py-3">
-                  <span className="sr-only">Actions</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredUsers.map((user) => (
-                <tr key={user.id}>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <div className="h-10 w-10 flex-shrink-0">
-                        <div className="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center">
-                          <span className="text-red-600 font-medium">
-                            {user.firstName[0]}{user.lastName[0]}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">
-                          {user.firstName} {user.lastName}
-                        </div>
-                        <div className="text-sm text-gray-500">{user.email}</div>
+
+            {/* Main Content */}
+            <div className="p-6 space-y-6">
+              {/* Basic Info */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <h4 className="font-semibold text-gray-700">Experience</h4>
+                  <p>{tutor.yearsOfExperience} years</p>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-gray-700">Eligibility</h4>
+                  <Badge variant={tutor.rightToWork ? "success" : "error"}>
+                    {tutor.eligibility}
+                  </Badge>
+                </div>
+              </div>
+
+              {/* Subjects */}
+              <div>
+                <h4 className="font-semibold text-gray-700 mb-2">Subjects</h4>
+                <div className="flex flex-wrap gap-2">
+                  {tutor.subjects.map((subject, idx) => (
+                    <div key={idx} className="bg-gray-100 rounded-lg p-2">
+                      <p className="font-medium">{subject.name}</p>
+                      <p className="text-sm text-gray-600">
+                        {subject.levels.join(", ")}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Documents Section */}
+              <div className="space-y-4">
+                <h4 className="font-semibold text-gray-700">
+                  Eligibility & Documents
+                </h4>
+
+                {/* Eligibility Status */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Badge variant={tutor.rightToWork ? "success" : "error"}>
+                      Right to Work: {tutor.eligibility}
+                    </Badge>
+                  </div>
+
+                  {/* Eligibility Documents */}
+                  {tutor.eligibility === "BritishIrish" && (
+                    <div className="space-y-2">
+                      <p className="font-medium text-gray-700">
+                        British/Irish Documents:
+                      </p>
+                      <div className="space-y-2 pl-4">
+                        {tutor.documents.BritishIrish.passportURL ? (
+                          <button
+                            onClick={() =>
+                              window.open(
+                                tutor.documents.BritishIrish.passportURL,
+                                "_blank"
+                              )
+                            }
+                            className="px-4 py-2 text-sm text-white bg-blue-600 rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          >
+                            View Passport
+                          </button>
+                        ) : (
+                          <p className="text-sm text-gray-500">
+                            No passport uploaded
+                          </p>
+                        )}
+
+                        {tutor.documents.BritishIrish.NINumber && (
+                          <p className="text-sm text-gray-600">
+                            <span className="font-medium">NI Number:</span>{" "}
+                            {tutor.documents.BritishIrish.NINumber}
+                          </p>
+                        )}
+
+                        {tutor.documents.BritishIrish
+                          .UkBornOrAdoptedCertificateURL ? (
+                          <button
+                            onClick={() =>
+                              window.open(
+                                tutor.documents.BritishIrish
+                                  .UkBornOrAdoptedCertificateURL,
+                                "_blank"
+                              )
+                            }
+                            className="px-4 py-2 text-sm text-white bg-blue-600 rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          >
+                            View Birth/Adoption Certificate
+                          </button>
+                        ) : (
+                          <p className="text-sm text-gray-500">
+                            No birth/adoption certificate uploaded
+                          </p>
+                        )}
                       </div>
                     </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <Badge
-                      variant={
-                        user.role === 'admin' ? 'danger' :
-                        user.role === 'tutor' ? 'warning' :
-                        'success'
-                      }
-                    >
-                      {user.role}
-                    </Badge>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <Badge
-                      variant={
-                        user.status === 'active' ? 'success' :
-                        user.status === 'inactive' ? 'warning' :
-                        'danger'
-                      }
-                    >
-                      {user.status || 'active'}
-                    </Badge>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {formatters.formatDate(new Date())}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button
-                      onClick={() => handleUserStatusChange(user.id, user.status === 'active' ? 'suspended' : 'active')}
-                      className="text-red-600 hover:text-red-900 mr-4"
-                    >
-                      {user.status === 'active' ? 'Suspend' : 'Activate'}
-                    </button>
-                    <button
-                      onClick={() => {}}
-                      className="text-gray-600 hover:text-gray-900"
-                    >
-                      Edit
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                  )}
 
-        {/* Empty State */}
-        {filteredUsers.length === 0 && (
-          <div className="text-center py-12">
-            <svg
-              className="mx-auto h-12 w-12 text-gray-400"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-              />
-            </svg>
-            <h3 className="mt-2 text-sm font-medium text-gray-900">No users found</h3>
-            <p className="mt-1 text-sm text-gray-500">
-              {searchQuery
-                ? 'Try adjusting your search or filters'
-                : 'Get started by adding a new user'}
-            </p>
+                  {tutor.eligibility === "EuEeaSwiss" && (
+                    <div className="space-y-2">
+                      <p className="font-medium text-gray-700">
+                        EU/EEA/Swiss Documents:
+                      </p>
+                      <div className="space-y-2 pl-4">
+                        {tutor.documents.EuEeaSwiss.passportURL ? (
+                          <button
+                            onClick={() =>
+                              window.open(
+                                tutor.documents.EuEeaSwiss.passportURL,
+                                "_blank"
+                              )
+                            }
+                            className="px-4 py-2 text-sm text-white bg-blue-600 rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          >
+                            View Passport
+                          </button>
+                        ) : (
+                          <p className="text-sm text-gray-500">
+                            No passport uploaded
+                          </p>
+                        )}
+
+                        {tutor.documents.EuEeaSwiss.shareCode && (
+                          <p className="text-sm text-gray-600">
+                            <span className="font-medium">Share Code:</span>{" "}
+                            {tutor.documents.EuEeaSwiss.shareCode}
+                          </p>
+                        )}
+
+                        {tutor.documents.EuEeaSwiss.DOB && (
+                          <p className="text-sm text-gray-600">
+                            <span className="font-medium">Date of Birth:</span>{" "}
+                            {tutor.documents.EuEeaSwiss.DOB}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {tutor.eligibility === "NonEuEea" && (
+                    <div className="space-y-2">
+                      <p className="font-medium text-gray-700">
+                        Non-EU/EEA Documents:
+                      </p>
+                      <div className="space-y-1 pl-4">
+                        {tutor.documents.NonEuEea
+                          .biometricResidencePermitURL ? (
+                          <button
+                            onClick={() =>
+                              window.open(
+                                tutor.documents.NonEuEea
+                                  .biometricResidencePermitURL,
+                                "_blank"
+                              )
+                            }
+                            className="px-4 py-2 text-sm text-white bg-blue-600 rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          >
+                            View Biometric Residence Permit
+                          </button>
+                        ) : (
+                          <p className="text-sm text-gray-500">
+                            No biometric residence permit uploaded
+                          </p>
+                        )}
+
+                        {tutor.documents.NonEuEea.validVisaURL ? (
+                          <button
+                            onClick={() =>
+                              window.open(
+                                tutor.documents.NonEuEea.validVisaURL,
+                                "_blank"
+                              )
+                            }
+                            className="px-4 py-2 text-sm text-white bg-blue-600 rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          >
+                            View Valid Visa
+                          </button>
+                        ) : (
+                          <p className="text-sm text-gray-500">
+                            No valid visa uploaded
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* DBS Status */}
+                <div className="space-y-2">
+                  <Badge variant={tutor.hasDBS ? "success" : "warning"}>
+                    DBS Status: {tutor.hasDBS ? "Verified" : "Pending"}
+                  </Badge>
+
+                  {tutor.hasDBS && tutor.dbsDetails && (
+                    <div className="space-y-1 text-sm text-gray-600">
+                      <p>Full Name: {tutor.dbsDetails.fullName}</p>
+                      <p>
+                        Certificate Number: {tutor.dbsDetails.certificateNumber}
+                      </p>
+                      {tutor.dbsDetails.certificateFileUrl && (
+                        <a
+                          href={tutor.dbsDetails.certificateFileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline"
+                        >
+                          View DBS Certificate
+                        </a>
+                      )}
+                    </div>
+                  )}
+
+                  {!tutor.hasDBS &&
+                    tutor.appliedForDBS &&
+                    tutor.dbsApplicationDetails && (
+                      <div className="space-y-1 text-sm text-gray-600">
+                        <p>Applied for DBS:</p>
+                        <p>Name: {tutor.dbsApplicationDetails.fullName}</p>
+                        <p>Email: {tutor.dbsApplicationDetails.email}</p>
+                        <p>Phone: {tutor.dbsApplicationDetails.phone}</p>
+                      </div>
+                    )}
+                </div>
+
+                {/* Academic Information */}
+                <div className="space-y-2">
+                  <h4 className="font-semibold text-gray-700">
+                    Academic Information
+                  </h4>
+
+                  <div className="space-y-1 text-sm text-gray-600">
+                    <p>Study Level: {tutor.StudyLevel || "Not specified"}</p>
+                    <p>University: {tutor.university || "Not specified"}</p>
+                    <p>Years of Experience: {tutor.yearsOfExperience}</p>
+
+                    {tutor.aLevels && tutor.aLevels.length > 0 && (
+                      <div>
+                        <p className="font-medium">A-Levels:</p>
+                        <ul className="list-disc list-inside">
+                          {tutor.aLevels.map((aLevel, idx) => (
+                            <li key={idx}>{aLevel}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {tutor.universityDocuments.length > 0 && (
+                      <div>
+                        <p className="font-medium">University Documents:</p>
+                        <div className="flex flex-wrap gap-2">
+                          {tutor.universityDocuments.map((doc, idx) => (
+                            <a
+                              key={idx}
+                              href={doc}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:underline"
+                            >
+                              Document {idx + 1}
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Approval Section */}
+              <div className="bg-gray-50 p-4 rounded-lg space-y-4">
+                <h4 className="font-semibold text-gray-700">
+                  Approval Settings
+                </h4>
+
+                <div className="space-y-3">
+                  {/* Checkboxes */}
+                  <div className="flex items-center space-x-4">
+                    <label className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        checked={
+                          approvalStates[tutor._id]?.approved_essay || false
+                        }
+                        onChange={(e) =>
+                          handleApprovalChange(
+                            tutor._id,
+                            "approved_essay",
+                            e.target.checked
+                          )
+                        }
+                        className="rounded text-red-600 focus:ring-red-500"
+                      />
+                      <span>Approve for Essays</span>
+                    </label>
+                    <label className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        checked={
+                          approvalStates[tutor._id]?.approved_tutoring || false
+                        }
+                        onChange={(e) =>
+                          handleApprovalChange(
+                            tutor._id,
+                            "approved_tutoring",
+                            e.target.checked
+                          )
+                        }
+                        className="rounded text-red-600 focus:ring-red-500"
+                      />
+                      <span>Approve for Tutoring</span>
+                    </label>
+                  </div>
+
+                  {/* Study Level Dropdown */}
+                  <div>
+                    <select
+                      value={approvalStates[tutor._id]?.StudyLevel || ""}
+                      onChange={(e) =>
+                        handleApprovalChange(
+                          tutor._id,
+                          "StudyLevel",
+                          e.target.value
+                        )
+                      }
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500"
+                    >
+                      <option value="">Select Study Level</option>
+                      {adminService.getStudyLevelOptions().map((level) => (
+                        <option key={level} value={level}>
+                          {level}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Submit Button */}
+                  <button
+                    onClick={() => handleApprovalSubmit(tutor._id)}
+                    className="w-full px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                  >
+                    Update Approvals
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
-        )}
+        ))}
       </div>
 
-      {/* Pagination */}
-      <div className="bg-white px-4 py-3 flex items-center justify-between border border-gray-200 rounded-lg sm:px-6">
-        <div className="flex-1 flex justify-between sm:hidden">
-          <button className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-            Previous
-          </button>
-          <button className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-            Next
-          </button>
+      {loading && (
+        <div className="flex justify-center p-4">
+          <LoadingSpinner />
         </div>
-        <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-          <div>
-            <p className="text-sm text-gray-700">
-              Showing <span className="font-medium">1</span> to{' '}
-              <span className="font-medium">{filteredUsers.length}</span> of{' '}
-              <span className="font-medium">{users.length}</span> results
-            </p>
-          </div>
-          <div>
-            <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-              <button className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                Previous
-              </button>
-              <button className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
-                1
-              </button>
-              <button className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                Next
-              </button>
-            </nav>
-          </div>
+      )}
+
+      {filteredTutors.length === 0 && !loading && (
+        <div className="text-center py-12 bg-white rounded-lg shadow-sm border border-gray-200">
+          <p className="text-gray-500">No unapproved tutors found</p>
         </div>
-      </div>
+      )}
+
+      <ConfirmationModal
+        isOpen={confirmationModal.isOpen}
+        onClose={() => setConfirmationModal({ isOpen: false, tutorId: null })}
+        onConfirm={handleConfirmApproval}
+        title="Confirm Tutor Approval"
+        message="Are you sure you want to update this tutor's approval status? This action will affect their ability to provide tutoring services and write essays."
+      />
     </div>
   );
 };

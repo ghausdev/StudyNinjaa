@@ -242,7 +242,7 @@ function App() {
             }
           />
           <Route
-            path="/admin/users"
+            path="/admin/tutors"
             element={
               isAuthenticated && isAdmin ? (
                 <UserManagement />
@@ -261,16 +261,8 @@ function App() {
               )
             }
           />
-          <Route
-            path="/admin/content"
-            element={
-              isAuthenticated && isAdmin ? (
-                <ContentManagement />
-              ) : (
-                <Navigate to="/login" replace />
-              )
-            }
-          />
+         
+          
         </Route>
 
         {/* Catch all route */}
