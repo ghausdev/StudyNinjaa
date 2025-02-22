@@ -37,6 +37,8 @@ import InterviewScheduler from "./pages/student/InterviewScheduler";
 import StudentProfile from "./pages/student/Profile";
 import EssayDetails from "./components/essays/EssayDetails.jsx";
 import TutorList from "./pages/student/TutorList";
+import PaymentSuccess from "./pages/student/PaymentSuccess";
+import PaymentFailed from "./pages/student/PaymentFailed";
 // Tutor Pages
 import TutorDashboard from "./pages/tutor/Dashboard";
 import EssayFeedback from "./pages/tutor/EssayFeedback";
@@ -46,6 +48,8 @@ import EssayPool from "./pages/tutor/EssayPool";
 import TutorChat from "./pages/tutor/TutorChat.jsx";
 import TutoringProfile from "./pages/tutor/TutoringProfile";
 import TutorChats from "./pages/tutor/TutorChats";
+import TutorPaymentSuccess from "./pages/tutor/TutorPaymentSuccess";
+import TutorPaymentFailed from "./pages/tutor/TutorPaymentFailed";
 // Admin Pages
 import AdminDashboard from "./pages/admin/Dashboard";
 import UserManagement from "./pages/admin/UserManagement";
@@ -201,6 +205,8 @@ function App() {
               )
             }
           />
+          <Route path="/payment-success/*" element={<PaymentSuccess />} />
+          <Route path="/payment-failed/*" element={<PaymentFailed />} />
         </Route>
 
         {/* Tutor Routes */}
@@ -226,6 +232,14 @@ function App() {
                 <Navigate to={!isAuthenticated ? "/login" : "/"} replace />
               )
             }
+          />
+          <Route
+            path="/tutor/payment-success"
+            element={<TutorPaymentSuccess />}
+          />
+          <Route
+            path="/tutor/payment-failed"
+            element={<TutorPaymentFailed />}
           />
         </Route>
 
@@ -261,8 +275,6 @@ function App() {
               )
             }
           />
-         
-          
         </Route>
 
         {/* Catch all route */}

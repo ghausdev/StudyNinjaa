@@ -1,17 +1,17 @@
 // server.js - Axios base configuration
-import axios from 'axios';
+import axios from "axios";
 
 const api = axios.create({
-  baseURL: 'http://localhost:9001/api',
+  baseURL: "http://localhost:9001/api",
   headers: {
-    'Accept': 'application/json',
-  }
+    Accept: "application/json",
+  },
 });
 
 // Add request interceptor to add auth token
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
