@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import TutorService from "../../services/tutorService";
 import { io } from "socket.io-client";
 import { useAuth } from "../../contexts/AuthContext";
+import { URL } from "../../services/server";
 
 const TutorChats = () => {
   const { user } = useAuth();
@@ -16,7 +17,7 @@ const TutorChats = () => {
   const messagesAreaRef = useRef(null);
 
   useEffect(() => {
-    const newSocket = io("http://localhost:9001/", {
+    const newSocket = io(URL, {
       auth: {
         token: localStorage.getItem("token"),
       },

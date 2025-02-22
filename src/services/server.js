@@ -1,8 +1,11 @@
 // server.js - Axios base configuration
 import axios from "axios";
 
+const BASE_URL = "http://localhost:9001/api";
+export const URL = BASE_URL;
+
 const api = axios.create({
-  baseURL: "http://localhost:9001/api",
+  baseURL: BASE_URL,
   headers: {
     Accept: "application/json",
   },
