@@ -8,6 +8,15 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [profiles, setProfiles] = useState({ student: false, tutor: false });
+  const navigate = useNavigate();
+
+  const clearAuthData = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    localStorage.removeItem("currentRole");
+    setUser(null);
+    setProfiles({ student: false, tutor: false });
+  };
 
   useEffect(() => {
     const initializeAuth = async () => {
@@ -22,46 +31,51 @@ export function AuthProvider({ children }) {
       });
 
       if (token && userData) {
-        setUser(userData);
-        // Check for existing profiles
         try {
+          // Verify token validity
           const profileData = await AuthService.checkProfiles();
           console.log("👤 Profile Data:", profileData);
+          setUser(userData);
           setProfiles(profileData);
         } catch (error) {
           console.error("❌ Error checking profiles:", error);
+          // If token is invalid, clear all auth data
+          clearAuthData();
+          navigate("/");
         }
       }
       setLoading(false);
     };
     initializeAuth();
-  }, []);
+  }, [navigate]);
 
   const login = async (userData, token) => {
     console.log("🔐 Login called with:", { userData, hasToken: !!token });
 
+    // Clear any existing auth data first
+    clearAuthData();
+
+    // Set new auth data
     localStorage.setItem("token", token);
     localStorage.setItem("user", JSON.stringify(userData));
     localStorage.setItem("currentRole", userData.role);
 
     setUser(userData);
 
-    // Immediately check and update profiles after login
     try {
       const profileData = await AuthService.checkProfiles();
       console.log("👤 Profile Data after login:", profileData);
       setProfiles(profileData);
     } catch (error) {
       console.error("❌ Error checking profiles after login:", error);
+      clearAuthData();
+      throw error;
     }
   };
 
   const logout = () => {
-    // Remove token and user data from localStorage
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    // Clear user state
-    setUser(null);
+    clearAuthData();
+    navigate("/");
   };
 
   // Update the isStudent and isTutor checks

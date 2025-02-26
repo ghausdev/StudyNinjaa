@@ -25,4 +25,21 @@ api.interceptors.request.use(
   }
 );
 
+// Add response interceptor to handle 401 errors
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      // Clear localStorage
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      localStorage.removeItem("currentRole");
+      
+      // Redirect to home page
+      window.location.href = "/";
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default api;
