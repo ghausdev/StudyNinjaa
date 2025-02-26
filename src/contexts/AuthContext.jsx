@@ -11,17 +11,25 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     const initializeAuth = async () => {
+      console.log("🔍 Initializing Auth Context");
       const token = localStorage.getItem("token");
       const userData = JSON.parse(localStorage.getItem("user"));
+
+      console.log("📦 Stored Data:", {
+        hasToken: !!token,
+        userData,
+        currentRole: localStorage.getItem("currentRole"),
+      });
 
       if (token && userData) {
         setUser(userData);
         // Check for existing profiles
         try {
           const profileData = await AuthService.checkProfiles();
+          console.log("👤 Profile Data:", profileData);
           setProfiles(profileData);
         } catch (error) {
-          console.error("Error checking profiles:", error);
+          console.error("❌ Error checking profiles:", error);
         }
       }
       setLoading(false);
@@ -29,19 +37,22 @@ export function AuthProvider({ children }) {
     initializeAuth();
   }, []);
 
-  const login = (userData, token) => {
-    // If user is a tutor and hasn't completed onboarding, redirect them
-    if (userData.role === "tutor" && !userData.onboardingCompleted) {
-      // Save token and user data to localStorage
-      localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(userData));
-      setUser(userData);
-      // Redirect will be handled by the protected route
-    } else {
-      // Regular login flow for other users
-      localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(userData));
-      setUser(userData);
+  const login = async (userData, token) => {
+    console.log("🔐 Login called with:", { userData, hasToken: !!token });
+
+    localStorage.setItem("token", token);
+    localStorage.setItem("user", JSON.stringify(userData));
+    localStorage.setItem("currentRole", userData.role);
+
+    setUser(userData);
+
+    // Immediately check and update profiles after login
+    try {
+      const profileData = await AuthService.checkProfiles();
+      console.log("👤 Profile Data after login:", profileData);
+      setProfiles(profileData);
+    } catch (error) {
+      console.error("❌ Error checking profiles after login:", error);
     }
   };
 
@@ -53,11 +64,12 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
-  // Ensure the user object has a role property
-  const isAuthenticated = !!user; // True if user is not null
+  // Update the isStudent and isTutor checks
+  const isAuthenticated = !!user;
   const isAdmin = user?.role === "admin";
-  const isStudent = user?.role === "student" || profiles.student;
-  const isTutor = user?.role === "tutor" || profiles.tutor;
+  const isStudent =
+    isAuthenticated && (user?.role === "student" || profiles.student);
+  const isTutor = isAuthenticated && (user?.role === "tutor" || profiles.tutor);
 
   const checkAndUpdateProfiles = async () => {
     try {

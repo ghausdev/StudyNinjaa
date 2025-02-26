@@ -82,6 +82,8 @@ const Login = () => {
   // Handle 2FA verification (Step 2)
   const handle2FASubmit = async (e) => {
     e.preventDefault();
+    console.log("🔒 Starting 2FA verification");
+
     if (!formData.verificationCode) {
       setErrors({ verificationCode: "Verification code is required" });
       return;
@@ -89,25 +91,31 @@ const Login = () => {
 
     setLoading(true);
     try {
+      console.log("📤 Sending 2FA verification request");
       const response = await AuthService.verify2FA(
         userId,
         formData.verificationCode
       );
+      console.log("📥 2FA Response:", response);
 
       // First update the auth context
-      login(response.user, response.token);
+      await login(response.user, response.token);
+      console.log("👤 User logged in:", response.user);
 
-      // Then handle navigation based on user type and onboarding status
-      if (
-        response.user.role === "tutor" &&
-        !response.user.onboardingCompleted
-      ) {
-        console.log("Redirecting to tutor onboarding...");
-        navigate("/tutor-onboarding", { replace: true });
-      } else {
-        navigate(`/${response.user.role}/dashboard`, { replace: true });
-      }
+      // Set initial role in localStorage
+      localStorage.setItem("currentRole", response.user.role);
+      console.log("🎭 Role set in localStorage:", response.user.role);
+
+      // Then handle navigation
+      const targetPath =
+        response.user.role === "tutor" && !response.user.onboardingCompleted
+          ? "/tutor-onboarding"
+          : `/${response.user.role}/dashboard`;
+
+      console.log("🔄 Navigating to:", targetPath);
+      navigate(targetPath, { replace: true });
     } catch (error) {
+      console.error("❌ 2FA Error:", error);
       setErrors({ submit: error.message || "Verification failed" });
     } finally {
       setLoading(false);

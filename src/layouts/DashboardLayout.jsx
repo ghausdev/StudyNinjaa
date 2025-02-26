@@ -46,36 +46,53 @@ const DashboardLayout = ({ role, userType = "student-tutor" }) => {
 
   // Add useEffect to initialize currentRole from localStorage
   useEffect(() => {
+    console.log("🎭 DashboardLayout - Checking roles:", {
+      savedRole: localStorage.getItem("currentRole"),
+      userRole: user?.role,
+      profiles,
+      currentRole,
+    });
+
     const savedRole = localStorage.getItem("currentRole");
     if (
       savedRole &&
       ((savedRole === "student" && profiles.student) ||
         (savedRole === "tutor" && profiles.tutor))
     ) {
+      console.log("✅ Setting saved role:", savedRole);
       setCurrentRole(savedRole);
+    } else if (user && user.role) {
+      console.log("✅ Setting default role:", user.role);
+      localStorage.setItem("currentRole", user.role);
+      setCurrentRole(user.role);
     }
-  }, [profiles]);
+  }, [profiles, user]);
 
   // Update the authentication check useEffect
   useEffect(() => {
+    console.log("🔒 DashboardLayout - Auth check:", {
+      isAuthenticated,
+      currentRole,
+      hasStudentProfile: profiles.student,
+      hasTutorProfile: profiles.tutor,
+      isAdmin,
+      user,
+    });
+
     if (!isAuthenticated) {
+      console.log("❌ Not authenticated, redirecting to login");
       navigate("/login");
-    } else if (currentRole === "student" && !profiles.student) {
+    } else if (currentRole === "student" && !isStudent) {
+      console.log("❌ No student access, redirecting to home");
       navigate("/");
-    } else if (currentRole === "tutor" && !profiles.tutor) {
+    } else if (currentRole === "tutor" && !isTutor) {
+      console.log("❌ No tutor access, redirecting to home");
       navigate("/");
     } else if (currentRole === "admin" && !isAdmin) {
+      console.log("❌ Not admin, redirecting to home");
       navigate("/");
     }
-  }, [
-    isAuthenticated,
-    isStudent,
-    isTutor,
-    isAdmin,
-    navigate,
-    currentRole,
-    profiles,
-  ]);
+  }, [isAuthenticated, isStudent, isTutor, isAdmin, navigate, currentRole]);
 
   // Handle logout
   const handleLogout = () => {
