@@ -30,13 +30,10 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
-      // Clear localStorage
+      // Clear localStorage but don't redirect
       localStorage.removeItem("token");
       localStorage.removeItem("user");
       localStorage.removeItem("currentRole");
-      
-      // Redirect to home page
-      window.location.href = "/";
     }
     return Promise.reject(error);
   }

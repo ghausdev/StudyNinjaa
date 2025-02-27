@@ -355,6 +355,21 @@ acceptEssay: async (essayID) => {
         throw error.response.data;
     }
 },
+
+/**
+ * @description Initiates payment for a completed tutoring session
+ * @param {string} tutoringSessionID - ID of the tutoring session
+ * @returns {Promise<object>} - Returns a promise containing the payment URL
+ * @throws {Error} - If there is an error during the process
+ */
+getPaidForTutoringSession: async (tutoringSessionID) => {
+    try {
+        const response = await api.post('/tutor/getPaidTutoringSessions', { tutoringSessionID });
+        return response.data;
+    } catch (error) {
+        throw error.response.data;
+    }
+},
 };
 
 export default TutorService;

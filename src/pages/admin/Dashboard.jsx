@@ -201,12 +201,12 @@ const Dashboard = () => {
             >
               Manage Tutors
             </Link>
-            <Link
+            {/* <Link
               to="/admin/transactions"
               className="block w-full text-center px-6 py-3 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
             >
               View Transactions
-            </Link>
+            </Link> */}
           </div>
         </div>
       </div>

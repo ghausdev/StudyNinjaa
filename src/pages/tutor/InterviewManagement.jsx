@@ -1,14 +1,15 @@
 // InterviewManagement.js
-import React, { useState, useEffect } from 'react';
-import InterviewCard from '../../components/interviews/InterviewCard';
-import Badge from '../../components/common/Badge';
-import { formatters } from '../../utils/formatters';
-import TutorService from '../../services/tutorService';
+import React, { useState, useEffect } from "react";
+import InterviewCard from "../../components/interviews/InterviewCard";
+import Badge from "../../components/common/Badge";
+import { formatters } from "../../utils/formatters";
+import TutorService from "../../services/tutorService";
+import { toast } from "react-toastify";
 
 const InterviewManagement = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
   const [isEditingAvailability, setIsEditingAvailability] = useState(false);
   const [availability, setAvailability] = useState({
     Monday: [],
@@ -17,12 +18,12 @@ const InterviewManagement = () => {
     Thursday: [],
     Friday: [],
     Saturday: [],
-    Sunday: []
+    Sunday: [],
   });
   const [sessions, setSessions] = useState({
     pending: [],
     inProgress: [],
-    completed: []
+    completed: [],
   });
   const [loading, setLoading] = useState(true);
 
@@ -34,16 +35,18 @@ const InterviewManagement = () => {
         const [pendingRes, inProgressRes, completedRes] = await Promise.all([
           TutorService.getPendingTutoringSessions(),
           TutorService.getInProgressTutoringSessions(),
-          TutorService.getCompletedTutoringSessions()
+          TutorService.getCompletedTutoringSessions(),
         ]);
+
+        console.log("completedRes", pendingRes);
 
         setSessions({
           pending: pendingRes.sessions || [],
           inProgress: inProgressRes.sessions || [],
-          completed: completedRes.sessions || []
+          completed: completedRes.sessions || [],
         });
       } catch (error) {
-        console.error('Error fetching sessions:', error);
+        console.error("Error fetching sessions:", error);
       } finally {
         setLoading(false);
       }
@@ -60,69 +63,84 @@ const InterviewManagement = () => {
   };
 
   const handleJoinInterview = (interviewId) => {
-    const interview = sessions.inProgress.find(i => i._id === interviewId);
+    const interview = sessions.inProgress.find((i) => i._id === interviewId);
     if (interview?.meetingLink) {
-      window.open(interview.meetingLink, '_blank');
+      window.open(interview.meetingLink, "_blank");
     }
   };
 
   const handleMarkComplete = async (interviewId) => {
-    console.log('Mark interview complete:', interviewId);
+    console.log("Mark interview complete:", interviewId);
   };
 
   const handleCancelInterview = async (interviewId) => {
-    console.log('Cancel interview:', interviewId);
+    console.log("Cancel interview:", interviewId);
+  };
+
+  const handleGetPaid = async (sessionId) => {
+    try {
+      const response = await TutorService.getPaidForTutoringSession(sessionId);
+
+      if (response?.paymentUrl) {
+        // Redirect to Stripe payment page
+        window.location.href = response.paymentUrl;
+      } else {
+        toast.error("Failed to generate payment link");
+      }
+    } catch (error) {
+      toast.error(error.message || "Failed to process payment");
+    }
   };
 
   const getFilteredSessions = () => {
     let filteredSessions = {
       pending: [...sessions.pending],
       inProgress: [...sessions.inProgress],
-      completed: [...sessions.completed]
+      completed: [...sessions.completed],
     };
 
     // Apply search filter if query exists
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       filteredSessions = {
-        pending: filteredSessions.pending.filter(session => 
+        pending: filteredSessions.pending.filter((session) =>
           session.purpose.toLowerCase().includes(query)
         ),
-        inProgress: filteredSessions.inProgress.filter(session => 
+        inProgress: filteredSessions.inProgress.filter((session) =>
           session.purpose.toLowerCase().includes(query)
         ),
-        completed: filteredSessions.completed.filter(session => 
+        completed: filteredSessions.completed.filter((session) =>
           session.purpose.toLowerCase().includes(query)
-        )
+        ),
       };
     }
 
     // Apply status filter
     switch (statusFilter) {
-      case 'ongoing':
+      case "ongoing":
         return {
           pending: [],
           inProgress: filteredSessions.inProgress,
-          completed: []
+          completed: [],
         };
-      case 'upcoming':
+      case "upcoming":
         return {
           pending: filteredSessions.pending,
           inProgress: [],
-          completed: []
+          completed: [],
         };
-      case 'completed':
+      case "completed":
         return {
           pending: [],
           inProgress: [],
-          completed: filteredSessions.completed
+          completed: filteredSessions.completed,
         };
-      case 'all':
+      case "all":
       default:
         return {
           pending: filteredSessions.pending,
           inProgress: filteredSessions.inProgress,
-          completed: filteredSessions.completed
+          completed: filteredSessions.completed,
         };
     }
   };
@@ -135,7 +153,9 @@ const InterviewManagement = () => {
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Tutoring Management</h1>
+            <h1 className="text-2xl font-bold text-gray-900">
+              Tutoring Management
+            </h1>
             <p className="mt-1 text-sm text-gray-500">
               Manage your tutoring sessions
             </p>
@@ -168,20 +188,30 @@ const InterviewManagement = () => {
         {/* Ongoing Sessions - Always show if there are any */}
         {filteredSessions.inProgress.length > 0 && (
           <div className="lg:col-span-2">
-            <h2 className="text-lg font-medium text-gray-900 mb-4">Ongoing Sessions</h2>
+            <h2 className="text-lg font-medium text-gray-900 mb-4">
+              Ongoing Sessions
+            </h2>
             <div className="space-y-4">
               {filteredSessions.inProgress.map((session) => (
-                <div key={session._id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div
+                  key={session._id}
+                  className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
+                >
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="text-lg font-medium text-gray-900">{session.purpose}</h3>
+                      <h3 className="text-lg font-medium text-gray-900">
+                        {session.purpose}
+                      </h3>
                       <p className="text-sm text-gray-500">
-                        {formatters.formatDateTime(new Date(session.startTime))} - {formatters.formatTime(new Date(session.endTime))}
+                        {formatters.formatDateTime(new Date(session.startTime))}{" "}
+                        - {formatters.formatTime(new Date(session.endTime))}
                       </p>
                     </div>
                     {session.meetingLink && (
                       <button
-                        onClick={() => window.open(session.meetingLink, '_blank')}
+                        onClick={() =>
+                          window.open(session.meetingLink, "_blank")
+                        }
                         className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
                       >
                         Join Meeting
@@ -197,15 +227,23 @@ const InterviewManagement = () => {
         {/* Upcoming Sessions */}
         {filteredSessions.pending.length > 0 && (
           <div className="lg:col-span-2">
-            <h2 className="text-lg font-medium text-gray-900 mb-4">Upcoming Sessions</h2>
+            <h2 className="text-lg font-medium text-gray-900 mb-4">
+              Upcoming Sessions
+            </h2>
             <div className="space-y-4">
               {filteredSessions.pending.map((session) => (
-                <div key={session._id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div
+                  key={session._id}
+                  className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
+                >
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="text-lg font-medium text-gray-900">{session.purpose}</h3>
+                      <h3 className="text-lg font-medium text-gray-900">
+                        {session.purpose}
+                      </h3>
                       <p className="text-sm text-gray-500">
-                        {formatters.formatDateTime(new Date(session.startTime))} - {formatters.formatTime(new Date(session.endTime))}
+                        {formatters.formatDateTime(new Date(session.startTime))}{" "}
+                        - {formatters.formatTime(new Date(session.endTime))}
                       </p>
                     </div>
                   </div>
@@ -218,18 +256,37 @@ const InterviewManagement = () => {
         {/* Past Sessions */}
         {filteredSessions.completed.length > 0 && (
           <div className="lg:col-span-2">
-            <h2 className="text-lg font-medium text-gray-900 mb-4">Past Sessions</h2>
+            <h2 className="text-lg font-medium text-gray-900 mb-4">
+              Past Sessions
+            </h2>
             <div className="space-y-4">
               {filteredSessions.completed.map((session) => (
-                <div key={session._id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div
+                  key={session._id}
+                  className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
+                >
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="text-lg font-medium text-gray-900">{session.purpose}</h3>
+                      <h3 className="text-lg font-medium text-gray-900">
+                        {session.purpose}
+                      </h3>
                       <p className="text-sm text-gray-500">
-                        {formatters.formatDateTime(new Date(session.startTime))} - {formatters.formatTime(new Date(session.endTime))}
+                        {formatters.formatDateTime(new Date(session.startTime))}{" "}
+                        - {formatters.formatTime(new Date(session.endTime))}
                       </p>
                     </div>
-                    <Badge variant="success">Completed</Badge>
+                    <div className="flex items-center space-x-4">
+                      {session.paymentStatus === "Paid" &&
+                        !session.tutor_paid && (
+                          <button
+                            onClick={() => handleGetPaid(session._id)}
+                            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                          >
+                            Get Paid
+                          </button>
+                        )}
+                      <Badge variant="success">Completed</Badge>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -238,19 +295,19 @@ const InterviewManagement = () => {
         )}
 
         {/* No Results Message */}
-        {!filteredSessions.inProgress.length && 
-         !filteredSessions.pending.length && 
-         !filteredSessions.completed.length && (
-          <div className="lg:col-span-2">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center">
-              <p className="text-gray-500">
-                {searchQuery 
-                  ? "No sessions found matching your search" 
-                  : "No sessions found for the selected filter"}
-              </p>
+        {!filteredSessions.inProgress.length &&
+          !filteredSessions.pending.length &&
+          !filteredSessions.completed.length && (
+            <div className="lg:col-span-2">
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center">
+                <p className="text-gray-500">
+                  {searchQuery
+                    ? "No sessions found matching your search"
+                    : "No sessions found for the selected filter"}
+                </p>
+              </div>
             </div>
-          </div>
-        )}
+          )}
       </div>
 
       {loading && (

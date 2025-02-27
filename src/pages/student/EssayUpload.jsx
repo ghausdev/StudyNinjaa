@@ -165,7 +165,8 @@ const EssayUpload = () => {
       const response = await StudentService.uploadEssay(uploadData);
 
       if (response?.paymentUrl) {
-        // Redirect to Stripe payment page
+        // Set payment type before redirecting to Stripe
+        localStorage.setItem("paymentType", "essay");
         window.location.href = response.paymentUrl;
       } else {
         setErrors({

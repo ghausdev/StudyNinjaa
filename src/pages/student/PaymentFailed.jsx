@@ -4,6 +4,18 @@ import { useNavigate } from "react-router-dom";
 const PaymentFailed = () => {
   const navigate = useNavigate();
 
+  const handleTryAgain = () => {
+    // Determine which page to navigate to based on the payment type
+    const paymentType = localStorage.getItem("paymentType");
+    if (paymentType === "tutoring") {
+      navigate("/student/tutors");
+    } else {
+      navigate("/student/essay-upload");
+    }
+    // Clean up
+    localStorage.removeItem("paymentType");
+  };
+
   return (
     <div className="max-w-3xl mx-auto mt-10 p-6 bg-white rounded-lg shadow-sm">
       <div className="text-center">
@@ -28,7 +40,7 @@ const PaymentFailed = () => {
         </p>
         <div className="space-x-4">
           <button
-            onClick={() => navigate("/student/essay-upload")}
+            onClick={handleTryAgain}
             className="inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700"
           >
             Try Again

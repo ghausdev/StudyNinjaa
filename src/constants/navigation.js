@@ -111,11 +111,11 @@ export const NAVIGATION = {
         path: ROUTES.ADMIN.USERS,
         icon: 'user'
       },
-      {
-        name: 'Transactions',
-        path: ROUTES.ADMIN.TRANSACTIONS,
-        icon: 'edit'
-      },
+      // {
+      //   name: 'Transactions',
+      //   path: ROUTES.ADMIN.TRANSACTIONS,
+      //   icon: 'edit'
+      // },
   
     ]
   }

@@ -255,7 +255,6 @@ const Home = () => {
                   />
                 </svg>
               </Link>
-             
             </div>
           </div>
         </div>
@@ -369,9 +368,7 @@ const Home = () => {
                     </p>
 
                     {/* Hidden learn more link that appears on hover */}
-                    <div className="mt-6 overflow-hidden h-0 group-hover:h-8 transition-all duration-300">
-                     
-                    </div>
+                    <div className="mt-6 overflow-hidden h-0 group-hover:h-8 transition-all duration-300"></div>
                   </div>
 
                   {/* Decorative corner accent */}
@@ -522,7 +519,6 @@ const Home = () => {
                     />
                   </svg>
                 </Link>
-                
               </motion.div>
             </div>
           </div>
@@ -548,36 +544,38 @@ const Home = () => {
       </section>
 
       {/* Add this CSS for animations */}
-      <style jsx>{`
-        @keyframes float {
-          0% {
-            transform: translate(0, 0) rotate(0deg);
+      <style>
+        {`
+          @keyframes float {
+            0% {
+              transform: translate(0, 0) rotate(0deg);
+            }
+            50% {
+              transform: translate(100px, 50px) rotate(180deg);
+            }
+            100% {
+              transform: translate(0, 0) rotate(360deg);
+            }
           }
-          50% {
-            transform: translate(100px, 50px) rotate(180deg);
+
+          .perspective-1000 {
+            perspective: 1000px;
           }
-          100% {
-            transform: translate(0, 0) rotate(360deg);
+
+          .rotate-y-10:hover {
+            transform: rotateY(10deg);
           }
-        }
 
-        .perspective-1000 {
-          perspective: 1000px;
-        }
+          .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+          }
 
-        .rotate-y-10:hover {
-          transform: rotateY(10deg);
-        }
-
-        .scrollbar-hide::-webkit-scrollbar {
-          display: none;
-        }
-
-        .scrollbar-hide {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-      `}</style>
+          .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+          }
+        `}
+      </style>
     </div>
   );
 };

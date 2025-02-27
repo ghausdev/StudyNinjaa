@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import AuthService from "../services/AuthService";
 
 const AuthContext = createContext();
@@ -32,22 +32,19 @@ export function AuthProvider({ children }) {
 
       if (token && userData) {
         try {
-          // Verify token validity
           const profileData = await AuthService.checkProfiles();
           console.log("👤 Profile Data:", profileData);
           setUser(userData);
           setProfiles(profileData);
         } catch (error) {
           console.error("❌ Error checking profiles:", error);
-          // If token is invalid, clear all auth data
           clearAuthData();
-          navigate("/");
         }
       }
       setLoading(false);
     };
     initializeAuth();
-  }, [navigate]);
+  }, []);
 
   const login = async (userData, token) => {
     console.log("🔐 Login called with:", { userData, hasToken: !!token });
