@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { helpers } from "../../utils/helpers";
 import AuthService from "../../services/AuthService";
 import { useAuth } from "../../contexts/AuthContext";
-
+import logo from "../../assets/auth.png";
 const Register = () => {
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
@@ -149,13 +149,11 @@ const Register = () => {
   return (
     <div className="w-full max-w-md">
       {/* Add Logo */}
-      <div className="text-center">
-        <Link to="/" className="inline-block">
-          <h1 className="text-4xl font-bold text-red-600 mb-6">
-            StudyNINJAA
-          </h1>
-        </Link>
-      </div>
+     <div className="text-center">
+          <Link to="/" className="inline-block">
+            <img src={logo} alt="StudyNINJAA" className="" />
+          </Link>
+        </div>
 
       <div className="text-center">
         <h2 className="mt-6 text-3xl font-bold text-gray-900">
