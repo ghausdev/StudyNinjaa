@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import AuthService from "../../services/AuthService";
 import { useAuth } from "../../contexts/AuthContext";
+import logo from "../../assets/auth.png";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -145,7 +146,7 @@ const Login = () => {
     <div className="w-full max-w-md">
       <div className="text-center">
         <Link to="/" className="inline-block">
-          <h1 className="text-4xl font-bold text-red-600 mb-6">StudyNINJAA</h1>
+          <img src={logo} alt="StudyNINJAA" className="" />
         </Link>
       </div>
 
